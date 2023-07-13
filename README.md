@@ -15,6 +15,11 @@
 
 # 使用教程 
 
+## 安装
+
+脚本安装:[https://greasyfork.org/zh-CN/scripts/470727-m-team-to-qbittorrent-web-ui-%E4%B8%8B%E8%BD%BD%E5%B7%A5%E5%85%B7]([url](https://greasyfork.org/zh-CN/scripts/470727-m-team-to-qbittorrent-web-ui-%E4%B8%8B%E8%BD%BD%E5%B7%A5%E5%85%B7))
+
+
 ## QBittorrent 解除跨域限制
 
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/01a1bca5-946d-4571-891f-0f19dcae7d66)
