@@ -11,7 +11,7 @@
 
 - 目前仅支持M-Team(馒头)站点 Linux qBittorrent
 
-- 更多站点我也没号,**有 HDChina 邀可以拉小弟一把**.
+- 更多站点我也没号,**有 HDChina 邀可以拉小弟一把**.本人TG:[@zhendi6]([url](https://t.me/zhendi6))
 
 # 使用教程 
 
