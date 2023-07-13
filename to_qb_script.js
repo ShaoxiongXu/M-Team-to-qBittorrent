@@ -2,7 +2,7 @@
 // @name         M-Team to qBittorrent Web UI 下载工具
 // @namespace    M-Team to qBittorrent Web UI 下载工具
 // @description  在馒头详情页添加一个下载按钮，点击按钮可以选择【标题|种子名|副标题】添加种子到 qBittorrent Web UI，同时进行文件重命名。
-// @version      2.0
+// @version      2.1
 // @updateURL    https://raw.githubusercontent.com/ShaoxiongXu/script/main/to_qb_script.js
 // @downloadURL  https://raw.githubusercontent.com/ShaoxiongXu/script/main/to_qb_script.js
 // @icon         https://kp.m-team.cc/favicon.ico
