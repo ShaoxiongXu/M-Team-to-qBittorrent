@@ -15,6 +15,11 @@
 
 # 使用教程 
 
+## QBittorrent 解除跨域限制
+
+![image](https://github.com/ShaoxiongXu/script/assets/127823819/01a1bca5-946d-4571-891f-0f19dcae7d66)
+
+
 ## 脚本配置
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/83a9467b-6f6b-44ab-bb1b-046a9c2fc203)
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/49367e0e-d4f5-4c8a-b190-369ca3b0a071)
@@ -22,5 +27,5 @@
 
 
 ## 种子详情页点击下载
-油猴脚本 设置参数
+
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/8200a519-77a1-49f3-94ce-6c4da9d7a6d8)
