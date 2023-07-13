@@ -309,8 +309,12 @@
                 console.log(m)
                 return addTorrentToQBittorrent(rename);
             })
+            .then(m => { // 延迟
+                console.log(m)
+                return sleep(1000);
+            })
             .then(m => {
-                return Promise.retry(() => getTorrentInfo(rename), 10, 5000);
+                return Promise.retry(() => getTorrentInfo(rename), 10, 1500);
             })
             .then((data) => { // 文件重命名
                 console.log(data.message);
