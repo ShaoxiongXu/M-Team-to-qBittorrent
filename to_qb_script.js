@@ -2,9 +2,7 @@
 // @name         M-Team to qBittorrent Web UI 下载工具
 // @namespace    M-Team to qBittorrent Web UI 下载工具
 // @description  在馒头详情页添加一个下载按钮，点击按钮可以选择【标题|种子名|副标题】添加种子到 qBittorrent Web UI，同时进行文件重命名。
-// @version      2.2
-// @updateURL    https://raw.githubusercontent.com/ShaoxiongXu/script/main/to_qb_script.js
-// @downloadURL  https://raw.githubusercontent.com/ShaoxiongXu/script/main/to_qb_script.js
+// @version      2.3
 // @icon         https://kp.m-team.cc/favicon.ico
 // @match        https://kp.m-team.cc/details.php*
 // @match        https://kp.m-team.cc/*/details.php*
@@ -26,6 +24,7 @@
         username: GM_getValue("username"), // qBittorrent Web UI的用户名
         password: GM_getValue("password"), // qBittorrent Web UI的密码
         savePath: GM_getValue("path"), // 下载目录 默认
+        separator: (GM_getValue("path") && GM_getValue("path")[1] == ":") ? "\\" : "/", // 文件分隔符 兼容 Linux Windows
         autoDownload: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? true : false, // false 添加后不自动下载，true 添加后自动下载
         paused: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? false : true, // true 暂停,false 开始
     };
@@ -145,7 +144,10 @@
 
                             console.log('TorrentInfo:', info);
 
-                            let oldFileName = info.content_path.replace(info.save_path, '').match(/([^\/]+)/)[0];
+                            // let oldFileName = info.content_path.replace(info.save_path, '').match(/([^\/]+)/)[0];
+
+                            // 下载目录下面第一级
+                            let oldFileName = info.content_path.replace(info.save_path, '').split(config.separator)[1];
 
                             console.log(`OldFileName: ${oldFileName}`);
 
@@ -241,7 +243,7 @@
                 },
                 onerror: function (error) { // 请求失败
                     console.error('请求发生错误:', error);
-                    reject(resolve("登录失败！"))
+                    reject("登录失败！");
                 }
             });
         })
@@ -627,6 +629,7 @@
             username: GM_getValue("username"), // qBittorrent Web UI的用户名
             password: GM_getValue("password"), // qBittorrent Web UI的密码
             savePath: GM_getValue("path"), // 下载目录 默认
+            separator: (GM_getValue("path") && GM_getValue("path")[1] == ":") ? "\\" : "/", // 文件分隔符 兼容 Linux Windows
             autoDownload: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? true : false, // false 添加后不自动下载，true 添加后自动下载
             paused: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? false : true, // true 暂停,false 开始
         };
