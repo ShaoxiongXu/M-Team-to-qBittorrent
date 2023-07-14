@@ -2,7 +2,7 @@
 // @name         M-Team to qBittorrent Web UI 下载工具
 // @namespace    M-Team to qBittorrent Web UI 下载工具
 // @description  在馒头详情页添加一个下载按钮，点击按钮可以选择【标题|种子名|副标题】添加种子到 qBittorrent Web UI，同时进行文件重命名。
-// @version      2.3
+// @version      2.4
 // @icon         https://kp.m-team.cc/favicon.ico
 // @match        https://kp.m-team.cc/details.php*
 // @match        https://kp.m-team.cc/*/details.php*
@@ -144,10 +144,17 @@
 
                             console.log('TorrentInfo:', info);
 
+
+                            // content_path 这个路径不同版本不固定,有时候是相对路径,有时候是绝对路径
+
                             // let oldFileName = info.content_path.replace(info.save_path, '').match(/([^\/]+)/)[0];
 
                             // 下载目录下面第一级
-                            let oldFileName = info.content_path.replace(info.save_path, '').split(config.separator)[1];
+                            let oldFilePath = info.content_path.replace(info.save_path, '');
+
+                            if(!oldFilePath.startsWith(config.separator)) oldFilePath = config.separator + oldFilePath;
+                            
+                            let oldFileName = oldFilePath.split(config.separator)[1];
 
                             console.log(`OldFileName: ${oldFileName}`);
 
@@ -263,7 +270,7 @@
             // 构建请求体数据
             let formData = new FormData();
             formData.append('urls', torrentUrl);
-            formData.append('autoTMM', config.autoDownload);
+            formData.append('autoTMM', false); // 手动
             formData.append('savepath', config.savePath);
             formData.append('cookie', '');
             formData.append('rename', rename);
@@ -316,7 +323,7 @@
                 return sleep(1000);
             })
             .then(m => {
-                return Promise.retry(() => getTorrentInfo(rename), 10, 1500);
+                return Promise.retry(() => getTorrentInfo(rename), 20, 1500);
             })
             .then((data) => { // 文件重命名
                 console.log(data.message);
