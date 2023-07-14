@@ -9,7 +9,7 @@
 
 - 目前仅测试Linux qBittorrent
 
-- 目前仅支持M-Team(馒头)站点 Linux qBittorrent
+- 目前仅支持M-Team(馒头)站点, qBittorrent 支持 Nas(Linux),Windows 都需要开启 WebUI.
 
 - 更多站点我也没号,**有 HDChina 邀可以拉小弟一把**.本人TG:[@zhendi6](https://t.me/zhendi6)
 
@@ -23,10 +23,17 @@
 
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/01a1bca5-946d-4571-891f-0f19dcae7d66)
 
+## Windows 客户端设置
+![20220714130923](https://github.com/ShaoxiongXu/script/assets/127823819/2c2dbea2-a007-4145-adf9-9bf54c244c4f)
+
 
 ## 脚本配置
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/83a9467b-6f6b-44ab-bb1b-046a9c2fc203)
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/49367e0e-d4f5-4c8a-b190-369ca3b0a071)
+
+**Windows示例**
+![image](https://github.com/ShaoxiongXu/script/assets/127823819/8442df0a-692d-41e6-a25f-4e7e9b9d7f9d)
+
 
 
 
