@@ -1,4 +1,6 @@
-# M-Team to qBittorrent Web UI 下载工具-油猴
+# M-Team to qBittorrent Web UI 下载工具-自定义重命名-油猴
+
+GitHub项目地址: [https://github.com/ShaoxiongXu/script](https://github.com/ShaoxiongXu/script)
 
 在馒头详情页添加一个下载按钮，点击按钮可以选择【标题|种子名|副标题】添加种子到 qbittorrent Web UI，同时进行文件重命名。
 
