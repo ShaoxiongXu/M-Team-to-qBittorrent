@@ -2,7 +2,7 @@
 // @name         M-Team to qBittorrent Web UI 下载工具
 // @namespace    M-Team to qBittorrent Web UI 下载工具
 // @description  在馒头详情页添加一个下载按钮，点击按钮可以选择【标题|种子名|副标题】添加种子到 qBittorrent Web UI，同时进行文件重命名。
-// @version      2.5
+// @version      2.6
 // @icon         https://kp.m-team.cc/favicon.ico
 // @match        https://kp.m-team.cc/details.php*
 // @match        https://kp.m-team.cc/*/details.php*
@@ -155,7 +155,7 @@
                             let oldFilePath = info.content_path.replace(info.save_path, '');
 
                             if(!oldFilePath.startsWith(config.separator)) oldFilePath = config.separator + oldFilePath;
-                            
+
                             let oldFileName = oldFilePath.split(config.separator)[1];
 
                             console.log(`OldFileName: ${oldFileName}`);
@@ -183,6 +183,7 @@
 
     }
 
+
     /**
      * 重命名
      *
@@ -195,33 +196,35 @@
      * @param {*} newPath
      */
     function renameFileOrFolder(hash, oldPath, newPath) {
+        return new Promise((resolve, reject) => {
 
-        const isFolderFlag = isFolder(oldPath);
-        const endpoint = isFolderFlag ? '/api/v2/torrents/renameFolder' : '/api/v2/torrents/renameFile';
 
-        // 原来文件是单文件 当前文件名未加后缀
-        if (!isFolderFlag && isFolder(newPath)) newPath += getSuffix(oldPath)
+            const isFolderFlag = isFolder(oldPath);
+            const endpoint = isFolderFlag ? '/api/v2/torrents/renameFolder' : '/api/v2/torrents/renameFile';
 
-        GM_xmlhttpRequest({
-            method: 'POST',
-            url: `${config.address}${endpoint}`,
-            data: getQueryString({
-                'hash': hash,
-                'oldPath': oldPath,
-                'newPath': newPath
-            }),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-            },
-            onload: function (response) {
-                console.log('重命名成功.');
-            },
-            onerror: function (error) {
-                // 请求失败
-                console.error('重命名请求失败: ', error);
-                alert('重命名失败!');
-            }
-        });
+
+            GM_xmlhttpRequest({
+                method: 'POST',
+                url: `${config.address}${endpoint}`,
+                data: getQueryString({
+                    'hash': hash,
+                    'oldPath': oldPath,
+                    'newPath': newPath
+                }),
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
+                onload: function (response) {
+                    console.log('重命名成功.');
+                    resolve("重命名成功.")
+                },
+                onerror: function (error) {
+                    // 请求失败
+                    console.error('重命名请求失败: ', error);
+                    reject('重命名失败!');
+                }
+            });
+        })
     }
 
     function getQueryString(params) {
@@ -317,9 +320,9 @@
 
     function download(rename) {
         login().then(m => { // 添加种子
-                console.log(m)
-                return addTorrentToQBittorrent(rename);
-            })
+            console.log(m)
+            return addTorrentToQBittorrent(rename);
+        })
             .then(m => { // 延迟
                 console.log(m)
                 return sleep(1000);
@@ -543,15 +546,31 @@
     })
 
     document.getElementById("closePopup").addEventListener('click', function (event) {
-        closePopup()
+        closePopup();
     })
 
     Array.from(document.getElementsByClassName("tDownloadBtn")).forEach((e => {
         e.addEventListener('click', function (event) {
             let inputValue = event.currentTarget.closest("tr").querySelector("input").value;
+            console.log("TorrentName: ", torrentName)
             console.log("InputValue: ", inputValue)
             closePopup()
-            download(inputValue)
+
+            const isFolderFlag = isFolder(torrentName);
+
+            // 原来文件是单文件 当前文件名未加后缀
+            if (!isFolderFlag && isFolder(inputValue)) inputValue += getSuffix(torrentName);
+
+            console.log("InputValue 增加后缀: ", inputValue)
+
+            let byteCount = new TextEncoder().encode(inputValue).length;
+            if(byteCount > 255) {
+                console.log(`字节数超过255，有 ${byteCount} 个字节。`);
+                alert(`字节数超过255，一个中文占用3字节，当前字节数:${byteCount}`);
+                return;
+            }
+
+            download(inputValue);
         })
     }))
 
