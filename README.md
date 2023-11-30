@@ -14,6 +14,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/script](https://github.com/S
 - 目前仅支持M-Team(馒头)站点, qBittorrent 支持 Nas(Linux),Windows 都需要开启 WebUI.
 
 - 更多站点我也没号,**有 HDChina 邀可以拉小弟一把**.本人TG:[@zhendi6](https://t.me/zhendi6)
+- 贡献者 [@fqdeng](https://t.me/fqdeng) 也欢迎大佬 给邀
 
 # 使用教程 
 
