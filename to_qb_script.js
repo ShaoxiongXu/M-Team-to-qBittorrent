@@ -267,7 +267,7 @@
      * 将种子添加到qBittorrent
      * @param {String} rename 选中种子名
      */
-    function addTorrentToQBittorrent(rename) {
+    function addTorrentToQBittorrent(rename, path) {
         return new Promise((resolve, reject) => {
 
             let torrentUrl = 'https://kp.m-team.cc' + document.evaluate("//a[text()='[IPv4+https]']", document).iterateNext().getAttribute("href");
@@ -276,7 +276,7 @@
             let formData = new FormData();
             formData.append('urls', torrentUrl);
             formData.append('autoTMM', false); // 手动
-            formData.append('savepath', config.savePath);
+            formData.append('savepath', path ? path : config.savePath);
             formData.append('cookie', '');
             formData.append('rename', rename);
             formData.append('category', '');
@@ -318,10 +318,10 @@
 
 
 
-    function download(rename) {
+    function download(rename, path) {
         login().then(m => { // 添加种子
             console.log(m)
-            return addTorrentToQBittorrent(rename);
+            return addTorrentToQBittorrent(rename, path);
         })
             .then(m => { // 延迟
                 console.log(m)
@@ -392,6 +392,13 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <th>存储位置:</th>
+                        <td class="t-text">
+                            <input id='temp-config-path' value="${config.savePath}">
+                            <p>${config.savePath}</p>
+                        </td>
+                    </tr>
                     <tr>
                         <th>种子名:</th>
                         <td class="t-text">
@@ -570,7 +577,9 @@
                 return;
             }
 
-            download(inputValue);
+            const tempConfigPath = document.getElementById('temp-config-path').value;
+            console.log('temp download path', tempConfigPath);
+            download(inputValue, tempConfigPath);
         })
     }))
 
