@@ -2,10 +2,11 @@
 // @name         M-Team to qBittorrent Web UI 下载工具
 // @namespace    M-Team to qBittorrent Web UI 下载工具
 // @description  在馒头详情页添加一个下载按钮，点击按钮可以选择【标题|种子名|副标题】添加种子到 qBittorrent Web UI，同时进行文件重命名。
-// @version      2.7
+// @version      2.9
 // @icon         https://kp.m-team.cc/favicon.ico
 // @match        https://kp.m-team.cc/details.php*
 // @match        https://kp.m-team.cc/*/details.php*
+// @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @grant        GM_xmlhttpRequest
 // @grant        GM_log
 // @grant        GM_setValue
@@ -19,15 +20,22 @@
 
 (function () {
     'use strict';
-    let config = {
-        address: GM_getValue("address"), // qBittorrent Web UI 地址 http://127.0.0.1:8080
-        username: GM_getValue("username"), // qBittorrent Web UI的用户名
-        password: GM_getValue("password"), // qBittorrent Web UI的密码
-        savePath: GM_getValue("path"), // 下载目录 默认
-        separator: (GM_getValue("path") && GM_getValue("path")[1] == ":") ? "\\" : "/", // 文件分隔符 兼容 Linux Windows
-        autoDownload: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? true : false, // false 添加后不自动下载，true 添加后自动下载
-        paused: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? false : true, // true 暂停,false 开始
-    };
+    // let config = {
+    //     address: GM_getValue("address"), // qBittorrent Web UI 地址 http://127.0.0.1:8080
+    //     username: GM_getValue("username"), // qBittorrent Web UI的用户名
+    //     password: GM_getValue("password"), // qBittorrent Web UI的密码
+    //     savePath: GM_getValue("savePath"), // 下载目录 默认
+    //     saveLocations: GM_getValue("locations"), // 下载目录 默认
+    //     separator: (GM_getValue("savePath") && GM_getValue("savePath")[1] == ":") ? "\\" : "/", // 文件分隔符 兼容 Linux Windows
+    //     paused: () => {
+    //         console.log("调用函数")
+    //         let falg = (!GM_getValue("paused") || GM_getValue("paused") == false) ? false : true
+    //         console.log("设置值为:", falg)
+    //         return falg
+    //     },  // 暂停 ? false 自动开始 : true 暂停
+    // };
+
+    let config = {}
 
     // 种子以这些文件结尾时,单文件储存,非目录
     const fileSuffix = [
@@ -154,7 +162,7 @@
                             // 下载目录下面第一级
                             let oldFilePath = info.content_path.replace(info.save_path, '');
 
-                            if(!oldFilePath.startsWith(config.separator)) oldFilePath = config.separator + oldFilePath;
+                            if (!oldFilePath.startsWith(config.separator)) oldFilePath = config.separator + oldFilePath;
 
                             let oldFileName = oldFilePath.split(config.separator)[1];
 
@@ -267,7 +275,7 @@
      * 将种子添加到qBittorrent
      * @param {String} rename 选中种子名
      */
-    function addTorrentToQBittorrent(rename, path) {
+    function addTorrentToQBittorrent(rename, savePath) {
         return new Promise((resolve, reject) => {
 
             let torrentUrl = 'https://kp.m-team.cc' + document.evaluate("//a[text()='[IPv4+https]']", document).iterateNext().getAttribute("href");
@@ -276,11 +284,11 @@
             let formData = new FormData();
             formData.append('urls', torrentUrl);
             formData.append('autoTMM', false); // 手动
-            formData.append('savepath', path ? path : config.savePath);
+            formData.append('savepath', savePath);
             formData.append('cookie', '');
             formData.append('rename', rename);
             formData.append('category', '');
-            formData.append('paused', config.paused);
+            formData.append('paused', !config.autoStartDownload); // 暂停? 默认 false
             formData.append('stopCondition', 'None');
             formData.append('contentLayout', 'Original');
             formData.append('dlLimit', 'NaN');
@@ -318,27 +326,22 @@
 
 
 
-    function download(rename, path) {
+    function download(rename, savePath) {
         login().then(m => { // 添加种子
             console.log(m)
-            return addTorrentToQBittorrent(rename, path);
+            return addTorrentToQBittorrent(rename, savePath);
+        }).then(m => { // 延迟
+            console.log(m)
+            return sleep(1000);
+        }).then(m => {
+            return Promise.retry(() => getTorrentInfo(rename), 20, 1500);
+        }).then((data) => { // 文件重命名
+            console.log(data.message);
+            return renameFileOrFolder(data.hash, data.oldFileName, data.torrentName);
+        }).then(() => alert("下载并重命名成功!")).catch((e) => {
+            console.log(e);
+            alert(e);
         })
-            .then(m => { // 延迟
-                console.log(m)
-                return sleep(1000);
-            })
-            .then(m => {
-                return Promise.retry(() => getTorrentInfo(rename), 20, 1500);
-            })
-            .then((data) => { // 文件重命名
-                console.log(data.message);
-                return renameFileOrFolder(data.hash, data.oldFileName, data.torrentName);
-            })
-            .then(() => alert("下载并重命名成功!"))
-            .catch((e) => {
-                console.log(e);
-                alert(e);
-            })
     };
 
 
@@ -370,68 +373,16 @@
         return dynamicPart;
     }
 
-    // window.onload = function () {
-
 
     let subTitle = replaceUnsupportedCharacters(document.querySelector("#outer > table:nth-child(2) > tbody > tr:nth-child(2) > td.rowfollow").innerText.trim());
     let title = replaceUnsupportedCharacters(document.querySelector("#top").innerText).trim().replace(/\[([^\[\]]+)\]$/g, '').trim();
     let torrentName = getTorrentName();
 
-
-
     let popupCode = `
 
         <button id="qbDownload">QBitorrent下载</button>
 
-        <div id="popup" class="popup" style="display: none;">
-
-            <table>
-                <thead style="height: 3em;">
-                    <tr>
-                        <th colspan="3">请选择文件名下载 </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <th>存储位置:</th>
-                        <td class="t-text">
-                            <input id='temp-config-path' value="${config.savePath}">
-                            <p>${config.savePath}</p>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th>种子名:</th>
-                        <td class="t-text">
-                            <input value="${torrentName}">
-                            <p>${torrentName}</p>
-                        </td>
-                        <td class="t-download"><button class="tDownloadBtn">下载</button></td>
-                    </tr>
-                    <tr>
-                        <th>主标题:</th>
-                        <td class="t-text">
-                            <input value="${title}">
-                            <p>${title}</p>
-                        </td>
-                        <td class="t-download"><button class="tDownloadBtn">下载</button></td>
-                    </tr>
-                    <tr>
-                        <th>副标题:</th>
-                        <td class="t-text">
-                            <input value="${subTitle}">
-                            <p>${subTitle}</p>
-                        </td>
-                        <td class="t-download"><button class="tDownloadBtn">下载</button></td>
-                    </tr>
-                    <tr>
-                        <th></th>
-                        <td class="t-text"></td>
-                        <td class="t-download"><button id="closePopup" style="background-color: azure;">关闭</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
+        
         `;
 
     GM_addStyle(`
@@ -455,7 +406,7 @@
                 margin: 5px;
             }
 
-            .popup input {
+            .textinput {
                 width: 400px;
                 background-color: #e4e4e4;
                 border: 1px solid #587993;
@@ -507,6 +458,18 @@
                 line-height: 1em;
             }
 
+            .location-btn {
+                height: 18px;
+                font-size: 12px;
+                line-height: 12px;
+                margin: 0 !important;
+            }
+
+            .draggable {
+                position: absolute;
+                // cursor: grab;
+            }
+
         `);
 
     GM_addStyle(`
@@ -526,74 +489,12 @@
     let targetElement = document.querySelector("#outer > table:nth-child(2) > tbody > tr:nth-child(5) > td.rowfollow");
     targetElement.innerHTML += popupCode;
 
-
-    let closePopup = () => {
-        let popup = document.getElementById("popup");
-        popup.style.display = "none";
-    }
-
-    let openPopup = () => {
-        let popup = document.getElementById("popup");
-        popup.style.display = "block";
-    }
-
-    let closeConfigPopup = () => {
-        let popup = document.getElementById("configPopup");
-        popup.style.display = "none";
-    }
-
-    let openConfigPopup = () => {
-        let popup = document.getElementById("configPopup");
-        popup.style.display = "block";
-    }
-
-    document.getElementById("qbDownload").addEventListener('click', function (event) {
-        console.log(event.currentTarget)
-        openPopup();
-    })
-
-    document.getElementById("closePopup").addEventListener('click', function (event) {
-        closePopup();
-    })
-
-    Array.from(document.getElementsByClassName("tDownloadBtn")).forEach((e => {
-        e.addEventListener('click', function (event) {
-            let inputValue = event.currentTarget.closest("tr").querySelector("input").value;
-            console.log("TorrentName: ", torrentName)
-            console.log("InputValue: ", inputValue)
-            closePopup()
-
-            const isFolderFlag = isFolder(torrentName);
-
-            // 原来文件是单文件 当前文件名未加后缀
-            if (!isFolderFlag && isFolder(inputValue)) inputValue += getSuffix(torrentName);
-
-            console.log("InputValue 增加后缀: ", inputValue)
-
-            let byteCount = new TextEncoder().encode(inputValue).length;
-            if(byteCount > 255) {
-                console.log(`字节数超过255，有 ${byteCount} 个字节。`);
-                alert(`字节数超过255，一个中文占用3字节，当前字节数:${byteCount}`);
-                return;
-            }
-
-            const tempConfigPath = document.getElementById('temp-config-path').value;
-            console.log('temp download path', tempConfigPath);
-            download(inputValue, tempConfigPath);
-        })
-    }))
-
-
     const menu_command_id = GM_registerMenuCommand("点击这里进行配置", function () {
-        openConfigPopup();
+        configDivApp.isVisible = true
     });
 
-
     let configPopupHtml = `
-
-
-
-        <div id="configPopup" class="popup" style="display: none;">
+        <div id="configPopup"  class="popup" v-show="isVisible">
             <form id="configForm">
             <table>
                 <thead style="height: 3em;">
@@ -605,41 +506,118 @@
                     <tr>
                         <th>地址:</th>
                         <td class="t-text">
-                            <input name="address" placeholder="http://127.0.0.1:8080" value="${config.address}">
+                            <input class="textinput" type="text" placeholder="http://127.0.0.1:8080" v-model="config.address">
                         </td>
                     </tr>
                     <tr>
                         <th>用户名:</th>
                         <td class="t-text">
-                            <input name="username" placeholder="qBittorrent 用户名" value="${config.username}">
+                            <input class="textinput" type="text" placeholder="qBittorrent 用户名" v-model="config.username">
                         </td>
                     </tr>
                     <tr>
                         <th>密码:</th>
                         <td class="t-text">
-                            <input name="password" type="password" placeholder="qBittorrent 密码" value="${config.password}">
+                            <input class="textinput" type="password" placeholder="qBittorrent 密码" v-model="config.password">
                         </td>
                     </tr>
-                    <tr>
+                    <!-- <tr>
                         <th>下载路径:</th>
                         <td class="t-text">
-                            <input name="path" value="${config.savePath}" placeholder="下载路径">
+                            <input class="textinput" v-model="config.savePath" placeholder="下载路径">
+                        </td>
+                    </tr> -->
+                    <tr>
+                        <th>下载位置:</th>
+                        <td class="t-text">
+                            <table>
+                                <tbody>
+                                    <tr v-for="(item, index) in config.saveLocations" :key="index">
+                                        <td><input class="textinput" v-model="item.label" placeholder="标签"></td>
+                                        <td>
+                                            <input class="textinput" v-model="item.value" placeholder="下载路径">
+                                        </td>
+                                        <td ><button class="location-btn" type="button" @click="delLine(index)">删除</button></td>
+                                    </tr>
+                                    <tr>
+                                        <th></th>
+                                        <td style="border: 0;"></td>
+                                        <td style="border: 0;"><button class="location-btn" type="button" @click="addLine()" style="background-color: azure;">添加</button></td>
+                                        <!-- <button type="button" @click="saveLine($event)">保存</button> -->
+                                    </tr>
+                                </tbody>
+                            </table>
                         </td>
                     </tr>
                     <tr>
                         <th>自动开始:</th>
                         <td class="t-text">
-                            <input name="autoStartDownlaod" type="checkbox" ${config.autoDownload ? "checked" : ""}>
+                            <input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="autoStartDownloadCheckboxChange">
                         </td>
                     </tr>
                     <tr>
                         <th></th>
-                        <td class="t-text"><button type="button" id="configSave">保存</button><button  type="button" id="configPopupClose" style="background-color: azure;">关闭</button></td>
+                        <td class="t-text"><button type="button" id="configSave" @click="configSave($event)">保存</button><button  type="button" @click="toggleConfigPopup()" style="background-color: azure;">关闭</button></td>
                     </tr>
                 </tbody>
             </table>
             </form>
         </div>
+
+        <div id="popup" class="popup draggable"  @mousedown="startDragging" v-show="isPopupVisible" :style="calculateStyles">
+
+            <table>
+                <thead style="height: 3em;">
+                    <tr>
+                        <th id="download-title" colspan="3">请选择文件名下载 </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th>下载位置:</th>
+                        <td class="t-text" colspan="2" style="padding: 6px 6px 6px 6px;">
+                            <div style="flex-wrap: wrap;">
+                                <label :title="item.value" style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;" v-for="(item, index) in config.saveLocations" :key="index">
+                                    <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="selectedLabel" :value="index">
+                                    {{ item.label }}
+                                </label>
+                            </div>
+                        </td>
+
+                    </tr>
+                    <tr>
+                        <th>种子名:</th>
+                        <td class="t-text">
+                            <input class="textinput" v-model="torrentName">
+                            <p>{{torrentName}}</p>
+                        </td>
+                        <td class="t-download"><button @click="download(torrentName)">下载</button></td>
+                    </tr>
+                    <tr>
+                        <th>主标题:</th>
+                        <td class="t-text">
+                            <input class="textinput" v-model="title">
+                            <p>{{title}}</p>
+                        </td>
+                        <td class="t-download"><button @click="download(title)">下载</button></td>
+                    </tr>
+                    <tr>
+                        <th>副标题:</th>
+                        <td class="t-text">
+                            <input class="textinput" v-model="subTitle">
+                            <p>{{subTitle}}</p>
+                        </td>
+                        <td class="t-download"><button @click="download(subTitle)">下载</button></td>
+                    </tr>
+                    <tr>
+                        <th>自动开始:</th>
+                        <td class="t-text"><input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></td>
+                        <td class="t-download"><button @click="togglePopup()" style="background-color: azure;">关闭</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
     `;
 
 
@@ -647,39 +625,146 @@
 
     document.getElementById("configDiv").innerHTML = configPopupHtml;
 
-    document.getElementById("configSave").addEventListener('click', function (event) {
-        console.log(event.currentTarget)
-        closeConfigPopup();
+    let configDivApp = new Vue({
+        el: '#configDiv',
+        data: {
+            isVisible: false, // 
+            isPopupVisible: false,
+            selectedLabel: GM_getValue("selectedLabel") ? GM_getValue("selectedLabel") : 0, // 默认下载位置索引
+            config: {
+                address: GM_getValue("address"), // qBittorrent Web UI 地址 http://127.0.0.1:8080
+                username: GM_getValue("username"), // qBittorrent Web UI的用户名
+                password: GM_getValue("password"), // qBittorrent Web UI的密码
+                saveLocations: GM_getValue("saveLocations") ? GM_getValue("saveLocations") : [{ label: "默认", value: GM_getValue("savePath") ? GM_getValue("savePath") : "" }], // 下载目录 默认 savePath 兼容老版本
+                separator: (GM_getValue("savePath") && GM_getValue("savePath")[1] == ":") ? "\\" : "/", // 文件分隔符 兼容 Linux Windows
+                autoStartDownload: GM_getValue("autoStartDownload") == null ? true : GM_getValue("autoStartDownload")
+            },
+            torrentName: torrentName,
+            title: title,
+            subTitle: subTitle,
+            // 拖动div
+            isDragging: false,
+            initialX: 0,
+            initialY: 0,
+            position: { x: 0, y: 0 },
+        },
+        methods: {
+            toggleConfigPopup() {
+                // 切换元素的显示与隐藏
+                this.isVisible = !this.isVisible;
+            },
+            togglePopup() {
+                // 切换元素的显示与隐藏
+                this.isPopupVisible = !this.isPopupVisible;
+            },
+            configSave(event) {
+                console.log(this.config)
+                this.toggleConfigPopup();
 
-        let formData = new FormData(document.getElementById("configForm"));
-        if (!formData.get("autoStartDownlaod")) GM_setValue("autoStartDownlaod", "")
-        for (let entry of formData.entries()) {
+                Object.entries(this.config).forEach(([key, value]) => {
+                    console.log(`Key: ${key}, Value: ${value}`);
+                    GM_setValue(key, value);
+                });
+            },
+            autoStartDownloadCheckboxChange() {
+                console.log('Checkbox state changed. New state:', this.config.autoStartDownload);
+                GM_setValue("autoStartDownload", this.config.autoStartDownload);
+            },
+            download(inputValue) {
 
-            let [name, value] = entry;
+                console.log("TorrentName: ", torrentName)
+                console.log("InputValue: ", inputValue)
 
-            GM_setValue(name, value);
+                this.togglePopup();
 
-        }
+                const isFolderFlag = isFolder(torrentName);
 
-        config = {
-            address: GM_getValue("address"), // qBittorrent Web UI 地址 http://127.0.0.1:8080
-            username: GM_getValue("username"), // qBittorrent Web UI的用户名
-            password: GM_getValue("password"), // qBittorrent Web UI的密码
-            savePath: GM_getValue("path"), // 下载目录 默认
-            separator: (GM_getValue("path") && GM_getValue("path")[1] == ":") ? "\\" : "/", // 文件分隔符 兼容 Linux Windows
-            autoDownload: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? true : false, // false 添加后不自动下载，true 添加后自动下载
-            paused: (GM_getValue("autoStartDownlaod") && GM_getValue("autoStartDownlaod") === "on") ? false : true, // true 暂停,false 开始
-        };
+                // 原来文件是单文件 当前文件名未加后缀
+                if (!isFolderFlag && isFolder(inputValue)) inputValue += getSuffix(torrentName);
 
+                console.log("InputValue 增加后缀: ", inputValue)
 
+                let byteCount = new TextEncoder().encode(inputValue).length;
+                if (byteCount > 255) {
+                    console.log(`字节数超过255，有 ${byteCount} 个字节。`);
+                    alert(`字节数超过255，一个中文占用3字节，当前字节数:${byteCount}`);
+                    return;
+                }
 
+                config = this.config;
+
+                let savePath = this.config.saveLocations[this.selectedLabel].value;
+                console.log("下载路径:", savePath)
+
+                // 记住上次下载位置
+                GM_setValue("selectedLabel", this.selectedLabel);
+
+                download(inputValue, savePath);
+            },
+            addLine() {
+                this.config.saveLocations.push({ label: "", value: "" })
+            },
+            saveLine() {
+                GM_setValue("saveLocations", this.config.saveLocations)
+            },
+            delLine(index) {
+                console.log("删除元素:", this.config.saveLocations[index])
+                this.config.saveLocations.splice(index, 1)
+            },
+            // 拖动 div
+            startDragging(e) {
+
+                console.log("拖动", e.target)
+                if (e.target === this.$el.querySelector('#popup') || e.target === this.$el.querySelector('#download-title')) {  // 只有在鼠标在popup上时才允许拖动,外圈
+                    this.isDragging = true;
+                    this.initialX = e.clientX - this.position.x;
+                    this.initialY = e.clientY - this.position.y;
+                    // 鼠标样式设置为 grabbing 拖动
+                    // this.$el.querySelector('#popup').style.cursor = 'grabbing';
+
+                    window.addEventListener('mousemove', this.drag);
+                    window.addEventListener('mouseup', this.stopDragging);
+                }
+            },
+            drag(e) {
+                if (!this.isDragging) return;
+                this.position.x = e.clientX - this.initialX;
+                this.position.y = e.clientY - this.initialY;
+            },
+            stopDragging() {
+                this.isDragging = false;
+                // 抓住鼠标样式
+                // this.$el.querySelector('#popup').style.cursor = 'grab';
+
+                window.removeEventListener('mousemove', this.drag);
+                window.removeEventListener('mouseup', this.stopDragging);
+            },
+        },
+        computed: {
+            calculateStyles() {
+                if (this.position.x == 0 && this.position.y == 0) {
+                    console.log(this.$el.querySelector('#popup'))
+                    const parentWidth = this.$el.querySelector('#popup').offsetWidth;
+                    const parentHeight = this.$el.querySelector('#popup').offsetHeight;
+
+                    const translateX = -50 * parentWidth / 100;
+                    const translateY = -50 * parentHeight / 100;
+                    console.log("translateX", translateX)
+                    console.log("translateY", translateY)
+                    this.position.x = translateX;
+                    this.position.y = translateY;
+                }
+                return {
+                    transform: `translate(${this.position.x}px, ${this.position.y}px)`,
+                };
+            },
+        },
     })
 
-    document.getElementById("configPopupClose").addEventListener('click', function (event) {
+    document.getElementById("qbDownload").addEventListener('click', function (event) {
         console.log(event.currentTarget)
-        closeConfigPopup();
+        configDivApp.isPopupVisible = true
     })
 
-    // }
 
 })();
