@@ -2,7 +2,7 @@
 
 GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent)
 
-【PT下载】在馒头详情页添加一个下载按钮，点击按钮可以选择以【标题|种子名|副标题】为文件名添加种子到 qbittorrent Web UI，同时可以选择不同下载目录。
+【PT下载|team|mteam|馒头】在馒头详情页添加一个下载按钮，点击按钮可以选择以【标题|种子名|副标题】为文件名添加种子到 qbittorrent Web UI，同时可以选择不同下载目录。
 
 <img src="https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47" alt="image" style="zoom: 33%;" />
 
