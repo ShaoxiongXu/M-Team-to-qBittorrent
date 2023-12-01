@@ -588,7 +588,7 @@
                     <tr>
                         <th>种子名:</th>
                         <td class="t-text">
-                            <input class="textinput" v-model="torrentName">
+                            <input :title="torrentName" class="textinput" v-model="torrentName">
                             <p>{{torrentName}}</p>
                         </td>
                         <td class="t-download"><button @click="download(torrentName)">下载</button></td>
@@ -596,7 +596,7 @@
                     <tr>
                         <th>主标题:</th>
                         <td class="t-text">
-                            <input class="textinput" v-model="title">
+                            <input :title="title" class="textinput" v-model="title">
                             <p>{{title}}</p>
                         </td>
                         <td class="t-download"><button @click="download(title)">下载</button></td>
@@ -604,7 +604,7 @@
                     <tr>
                         <th>副标题:</th>
                         <td class="t-text">
-                            <input class="textinput" v-model="subTitle">
+                            <input :title="subTitle" class="textinput" v-model="subTitle">
                             <p>{{subTitle}}</p>
                         </td>
                         <td class="t-download"><button @click="download(subTitle)">下载</button></td>
@@ -693,7 +693,16 @@
 
                 config = this.config;
 
+                if(this.config.saveLocations.length == 0) {
+                    alert(`必须选择下载位置，如果没有下载位置请点击脚本图标进行配置。`)
+                    return;
+                }
+
                 let savePath = this.config.saveLocations[this.selectedLabel].value;
+                if(!savePath) {
+                    alert(`下载路径为空！`)
+                    return;
+                }
                 console.log("下载路径:", savePath)
 
                 // 记住上次下载位置
@@ -710,6 +719,9 @@
             delLine(index) {
                 console.log("删除元素:", this.config.saveLocations[index])
                 this.config.saveLocations.splice(index, 1)
+                if(this.selectedLabel+1 >= this.config.saveLocations.length) {
+                    this.selectedLabel = 0;
+                }
             },
             // 拖动 div
             startDragging(e) {
