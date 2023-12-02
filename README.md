@@ -16,7 +16,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 - 文件名长度检测
 
-- 目前仅支持Windows qBittorrent  Web UI 、Windows qBittorrent  Web UI
+- 目前支持Linux(NAS) qBittorrent  Web UI 、Windows qBittorrent  Web UI
 
 - 目前仅支持M-Team(馒头)站点
 
