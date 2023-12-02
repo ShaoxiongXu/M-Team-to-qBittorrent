@@ -7,8 +7,11 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 <img src="https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47" alt="image" style="zoom: 33%;" />
 
 - 支持选择命名 （选择时也可以在输入框手动修改）
+  
 - 种子名和磁盘文件名同步修改
+  
 - 支持选择目录
+  
 - 自动取代 Windows/Linux 不支持字符为空格
 
 - 文件名长度检测
@@ -18,6 +21,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 - 目前仅支持M-Team(馒头)站点
 
 - 更多站点我也没号,**有 HDChina 或其他PT站 邀可以拉小弟一把**.本人TG:[@zhendi6](https://t.me/zhendi6)
+  
 - 贡献者 [@fqdeng](https://t.me/fqdeng) 也欢迎大佬 给邀
 
 # 使用教程 
@@ -44,8 +48,11 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 
 
+
 ## 种子详情页点击下载
 
 <img src="https://github.com/ShaoxiongXu/script/assets/127823819/bc33dc63-6c9c-4086-8c53-3cdfb722c74b" alt="image" style="zoom: 33%;" />
 
 <img src="https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47" alt="image" style="zoom:50%;" />
+
+<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/e675eb78-d244-4d3a-b135-f0c9cc47290d" alt="image" style="zoom:50%;" />
