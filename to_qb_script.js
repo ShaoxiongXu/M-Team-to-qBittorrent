@@ -792,7 +792,7 @@
 
                 config = this.config;
 
-                if (this.config.saveLocations.length == 0) {
+                if (this.config.saveLocations.length == 0 || this.selectedLabel >= this.config.saveLocations.length) {
                     alert(`必须选择下载位置，如果没有下载位置请点击脚本图标进行配置。`)
                     return;
                 }
@@ -838,6 +838,7 @@
                 this.config.saveLocations.splice(index, 1)
                 if (this.selectedLabel + 1 >= this.config.saveLocations.length) {
                     this.selectedLabel = 0;
+                    GM_setValue("selectedLabel", 0)
                 }
             },
             // 拖动 div
