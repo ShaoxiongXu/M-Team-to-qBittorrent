@@ -417,7 +417,7 @@
             console.log(m)
             return sleep(1000);
         }).then(m => {
-            return Promise.retry(() => getTorrentInfo(hash), 20, 1500);
+            return Promise.retry(() => getTorrentInfo(hash), 60, 1500);
         }).then((data) => { // 文件重命名
             console.log(data.message);
             return renameFileOrFolder(hash, data.oldFileName, rename);
@@ -720,7 +720,7 @@
                 password: GM_getValue("password", ""), // qBittorrent Web UI的密码
                 saveLocations: GM_getValue("saveLocations", [{ label: "默认", value: "" }]), // 下载目录 默认 savePath 兼容老版本
                 separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
-                autoStartDownload: GM_getValue("autoStartDownload") == null ? true : GM_getValue("autoStartDownload")
+                autoStartDownload: GM_getValue("autoStartDownload", true)
             },
             torrentName: torrentName,
             title: title,
@@ -836,7 +836,7 @@
             delLine(index) {
                 console.log("删除元素:", this.config.saveLocations[index])
                 this.config.saveLocations.splice(index, 1)
-                if (this.selectedLabel + 1 >= this.config.saveLocations.length) {
+                if (this.selectedLabel >= this.config.saveLocations.length) {
                     this.selectedLabel = 0;
                     GM_setValue("selectedLabel", 0)
                 }

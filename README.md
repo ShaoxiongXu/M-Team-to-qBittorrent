@@ -20,6 +20,8 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 - 目前仅支持M-Team(馒头)站点
 
+- qBittorrent 版本要求 ≥ v4.1
+
 - 更多站点我也没号,**有 HDChina 或其他PT站 邀可以拉小弟一把**.本人TG:[@zhendi6](https://t.me/zhendi6)
   
 - 贡献者 [@fqdeng](https://t.me/fqdeng) 也欢迎大佬 给邀
