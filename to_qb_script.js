@@ -458,7 +458,7 @@
 
 
     let subTitle = replaceUnsupportedCharacters(document.querySelector("#outer > table:nth-child(2) > tbody > tr:nth-child(2) > td.rowfollow").innerText.trim());
-    let title = replaceUnsupportedCharacters(document.querySelector("#top").innerText).trim().replace(/\[([^\[\]]+)\]$/g, '').trim();
+    let title = replaceUnsupportedCharacters(document.querySelector("#top").firstChild.nodeValue).trim(); // .replace(/\[([^\[\]]+)\]$/g, '').trim();
     let torrentName = getTorrentName();
 
     let popupCode = `
