@@ -8,7 +8,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 - 支持选择命名 （选择时也可以在输入框手动修改）
   
-- 种子名和磁盘文件名同步修改
+- 种子名和磁盘文件名同步修改 (不影响上传)
   
 - 支持选择目录
   
