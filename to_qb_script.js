@@ -448,7 +448,7 @@
      * 获取种子名
      */
     let getTorrentName = function () {
-        let str = document.querySelector("#outer > table:nth-child(2) > tbody > tr:nth-child(1) > td.rowfollow > a.index").innerText;
+        let str = document.querySelector("#outer td.rowfollow > a.index").innerText.trim()
         console.log(str)
         let regex = /\.(.+)\./;
         let match = regex.exec(str);
@@ -457,7 +457,7 @@
     }
 
 
-    let subTitle = replaceUnsupportedCharacters(document.querySelector("#outer > table:nth-child(2) > tbody > tr:nth-child(2) > td.rowfollow").innerText.trim());
+    let subTitle = replaceUnsupportedCharacters(document.querySelector("#outer td.rowfollow > a.index").closest("tr").nextElementSibling.querySelector(".rowfollow").innerText.trim());
     let title = replaceUnsupportedCharacters(document.querySelector("#top").firstChild.nodeValue).trim(); // .replace(/\[([^\[\]]+)\]$/g, '').trim();
     let torrentName = getTorrentName();
 
@@ -569,8 +569,7 @@
     `)
 
     // 获取指定元素
-    let targetElement = document.querySelector("#outer > table:nth-child(2) > tbody > tr:nth-child(5) > td.rowfollow");
-    targetElement.innerHTML += popupCode;
+    document.querySelector("#outer img.dt_download").closest("td").innerHTML += popupCode;
 
     const menu_command_id = GM_registerMenuCommand("点击这里进行配置", function () {
         configDivApp.isVisible = true
