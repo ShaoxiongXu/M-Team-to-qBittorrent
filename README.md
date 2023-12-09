@@ -1,4 +1,4 @@
-# M-Team to qBittorrent Web UI 下载工具-自定义重命名-油猴
+# 【油猴脚本】PT to qBittorrent 下载工具 【一键下载、重命名、指定下载位置】
 
 GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent)
 
