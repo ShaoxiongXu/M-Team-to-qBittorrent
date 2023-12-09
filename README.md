@@ -43,7 +43,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 ### 脚本配置
 
-<img src="https://github.com/ShaoxiongXu/script/assets/127823819/83a9467b-6f6b-44ab-bb1b-046a9c2fc203" alt="image" style="zoom: 50%;" />
+<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/f92f2356-402a-41a4-a8b0-d6a163e5bac0" alt="image" style="zoom: 50%;" />
 <img src="https://github.com/ShaoxiongXu/script/assets/127823819/9ce2da66-8fbc-4511-8792-54027098f4d4" alt="image" style="zoom:50%;" />
 
 **Windows示例（旧）**
