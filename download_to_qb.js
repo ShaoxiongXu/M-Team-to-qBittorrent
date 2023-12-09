@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    种子下载工具
 // @description  在种子详情页添加下载按钮，点击后可以选择​【标题|种子名|副标题】​并将种子添加到 qBittorrent，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
-// @version      3.5
+// @version      3.6
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @match        https://*/details.php*
@@ -109,8 +109,10 @@
                 return regex.exec(str)[1];
             },
             getTorrentSubTitle: () => {
-                return document.querySelector("#outer td.rowfollow > a.index")
-                    .closest("tr").nextElementSibling.querySelector(".rowfollow").innerText;
+                let subTitleTd = document.evaluate("//td[text()='副標題']", document).iterateNext()
+                    || document.evaluate("//td[text()='副标题']", document).iterateNext()
+                    || document.evaluate("//td[text()='Small Description']", document).iterateNext()
+                return subTitleTd.nextElementSibling.innerText;
             }
         }
     };
@@ -839,19 +841,19 @@
                         <tr>
                             <th>地址:</th>
                             <td class="t-text">
-                                <input class="textinput" type="text" placeholder="http://127.0.0.1:8080" v-model="config.address">
+                                <input class="textinput" autocomplete="off" type="text" placeholder="http://127.0.0.1:8080" v-model="config.address">
                             </td>
                         </tr>
                         <tr>
                             <th>用户名:</th>
                             <td class="t-text">
-                                <input class="textinput" type="text" placeholder="qBittorrent 用户名" v-model="config.username">
+                                <input class="textinput" autocomplete="off" type="text" placeholder="qBittorrent 用户名" v-model="config.username">
                             </td>
                         </tr>
                         <tr>
                             <th>密码:</th>
                             <td class="t-text">
-                                <input class="textinput" type="password" placeholder="qBittorrent 密码" v-model="config.password">
+                                <input class="textinput" autocomplete="off" type="password" placeholder="qBittorrent 密码" v-model="config.password">
                             </td>
                         </tr>
                         <tr>
@@ -989,7 +991,9 @@
 
     // console.log(requestDataMap)
 
-    window.onload = function () {
+    document.addEventListener('DOMContentLoaded', function () {
+        // 在DOM加载完成后执行的代码
+        // 页面资源加载可能仍在进行中，但DOM已准备就绪
         // 单独配置了的站点或者 NexusPHP 站点
         if (getSite() || isNexusPHP()) {
             setStyle();
@@ -998,7 +1002,6 @@
         } else {
             console.log("非 NexusPHP 站点，或未经过特殊配置站点，暂不支持！")
         }
-    };
-
+    });
 
 })();
