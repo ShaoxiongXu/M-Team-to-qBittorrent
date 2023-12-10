@@ -19,7 +19,7 @@
 // @grant        window.close
 // @grant        window.focus
 // @grant        window.onurlchange
-// @run-at document-start
+// @run-at       document-start
 // @connect      *
 // @license      GPL-2.0
 // @author       ShaoxiongXu
@@ -989,12 +989,8 @@
     //     originOpen.apply(this, arguments);
     // };
 
-    // console.log(requestDataMap)
 
-    document.addEventListener('DOMContentLoaded', function () {
-        // 在DOM加载完成后执行的代码
-        // 页面资源加载可能仍在进行中，但DOM已准备就绪
-        // 单独配置了的站点或者 NexusPHP 站点
+    function main() {
         if (getSite() || isNexusPHP()) {
             setStyle();
             setHtml();
@@ -1002,6 +998,20 @@
         } else {
             console.log("非 NexusPHP 站点，或未经过特殊配置站点，暂不支持！")
         }
-    });
+    }
+
+    // console.log(requestDataMap)
+    if (document.readyState === "loading") {
+        // 在DOM加载完成后执行的代码，页面资源加载可能仍在进行中，但DOM已准备就绪
+        document.addEventListener('DOMContentLoaded', function () {
+            // 单独配置了的站点或者 NexusPHP 站点
+            console.log("在DOM加载完成后执行...")
+            main();
+        });
+    } else {
+        // `DOMContentLoaded` 已经被触发 极低概率触发。。。
+        console.log("DOMContentLoaded 已经被触发")
+        main();
+    }
 
 })();
