@@ -2,9 +2,10 @@
 // @name         种子下载工具
 // @namespace    种子下载工具
 // @description  在种子详情页添加下载按钮，点击后可以选择​【标题|种子名|副标题】​并将种子添加到 qBittorrent，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
-// @version      3.6
+// @version      3.7
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
+// @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@3.6/coco-message.js
 // @match        https://*/details.php*
 // @match        https://*/*/details.php*
 // @match        https://test2.m-team.cc/detail/*
@@ -84,8 +85,7 @@
                     }
                     return window.location.protocol + "//" + "/" + window.location.hostname + href;
                 } else {
-                    console.log('没有找到下载链接!');
-                    alert("没有找到下载链接!")
+                    cocoMessage.error("未在页面找到下载链接！", 10000, true);
                     return "";
                 }
             },
@@ -93,7 +93,7 @@
                 let text = document.getElementById("outer").innerText;
                 let match = text.match(/hash.?: ([a-fA-F0-9]{40})/i);
                 if (!match) {
-                    alert(`未找到包含'hash: xxx'的文本内容。`)
+                    cocoMessage.error("未在页面找到 Hash 值！", 10000, true);
                     return;
                 }
                 // 输出匹配到的hash值
@@ -136,7 +136,7 @@
             console.log(`"执行: ${flag}.${methodName}(${execMethodName})"`)
             return execMethodName();
         } catch (e) {
-            console.error(`执行 ${methodName}() 失败!`, e)
+            console.error(`执行 ${methodName}() 失败！`, e)
         }
         return ""
     }
@@ -270,7 +270,7 @@
                     reject("获取种子信息失败,种子列表未找到种子.")
                 }, onerror: function (error) {
                     console.error('获取种子信息失败: 请求发生错误:', error);
-                    reject("获取种子信息失败!")
+                    reject("获取种子信息失败！")
                 }
             });
         })
@@ -290,14 +290,14 @@
                 onload: function (response) {
                     let data = JSON.parse(response.responseText);
                     if (data && data.length == 1) {
-                        reject("种子已经存在啦!")
+                        reject("种子已经存在啦！")
                         return;
                     }
                     resolve()
                 },
                 onerror: function (error) {
                     console.error('获取种子信息失败: 请求发生错误:', error);
-                    reject("获取种子信息失败!")
+                    reject("获取种子信息失败！")
                 }
             });
         })
@@ -322,7 +322,6 @@
 
             const endpoint = isFolder(oldPath) ? '/api/v2/torrents/renameFolder' : '/api/v2/torrents/renameFile';
 
-
             GM_xmlhttpRequest({
                 method: 'POST', url: `${config.address}${endpoint}`, data: getQueryString({
                     'hash': hash, 'oldPath': oldPath, 'newPath': newPath
@@ -334,7 +333,7 @@
                 }, onerror: function (error) {
                     // 请求失败
                     console.error('重命名请求失败: ', error);
-                    reject('重命名失败!');
+                    reject('重命名失败！');
                 }
             });
         })
@@ -386,10 +385,10 @@
      * @returns 
      */
     function addTorrentToQBittorrent(rename, savePath, torrentUrl) {
-        return new Promise((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
 
             if (!torrentUrl) {
-                alert("无法获取下载地址!")
+                cocoMessage.error("获取下载地址为空！", 10000, true);
                 return;
             }
 
@@ -407,19 +406,25 @@
             // formData.append('dlLimit', 'NaN'); // 设置种子下载速度限制。单位为字节/秒
             // formData.append('upLimit', 'NaN'); // 设置种子上传速度限制。单位为字节/秒
 
+            let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
+
             GM_xmlhttpRequest({
                 method: 'POST',
                 url: `${config.address}/api/v2/torrents/add`,
                 data: formData,
-                onload: function (response) {
+                onload: async function (response) {
                     const responseData = response.responseText;
                     if (responseData !== "Ok.") {
+                        downloadMsg();
                         reject(`添加种子失败: ${responseData}`);
                     } else {
+                        await sleep(1000)
+                        downloadMsg();
                         resolve("添加种子成功.");
                     }
                 },
                 onerror: function (error) {
+                    downloadMsg();
                     console.error('添加种子失败: 请求发生错误:', error);
                     reject("添加种子失败: 请求发生错误...");
                 }
@@ -449,7 +454,7 @@
                         url: `${config.address}/api/v2/app/defaultSavePath`, onload: function (response) {
 
                             if (response.status != "200") {
-                                resolve("获取默认保存路径失败!");
+                                resolve("获取默认保存路径失败！");
                                 return;
                             }
 
@@ -471,8 +476,8 @@
                             }
                             resolve();
                         }, onerror: function (error) {
-                            console.error('获取系统信息失败!', error);
-                            reject("获取系统信息失败!")
+                            console.error('获取系统信息失败！', error);
+                            reject("获取系统信息失败！")
                         }
                     });
                 })
@@ -486,24 +491,35 @@
         })
     };
 
-    function download(rename, savePath, hash, torrentUrl) {
+    function download(rename, savePath, hash, torrentUrl, autoCloseWindow) {
+        let readyRenameMsg = null;
         login().then(m => { // 检查是否添加过了
             console.log(m)
             return chcekExist(hash);
         }).then(m => { // 添加种子
             if (m) console.log(m)
             return addTorrentToQBittorrent(rename, savePath, torrentUrl);
-        }).then(m => { // 延迟
-            console.log(m)
-            return sleep(1000);
         }).then(m => {
+            readyRenameMsg = cocoMessage.loading("重命名中...", true);
             return Promise.retry(() => getTorrentInfo(hash), 60, 1500);
         }).then((data) => { // 文件重命名
             console.log(data.message);
             return renameFileOrFolder(hash, data.oldFileName, rename);
-        }).then(() => alert("下载并重命名成功!")).catch((e) => {
+        }).then(() => {
+            readyRenameMsg()
+            console.log("下载并重命名成功！")
+            if (autoCloseWindow && !(window.history && window.history.length > 1)) {
+                cocoMessage.success("下重命名成功！ 窗口 3 秒后关闭！", 0);
+                setTimeout(function () {
+                    window.close();
+                }, 3000);
+            } else {
+                cocoMessage.success("下载并重命名成功！", 0);
+            }
+        }).catch((e) => {
+            if (readyRenameMsg) readyRenameMsg();
             console.log(e);
-            alert(e);
+            cocoMessage.error(e, 0);
         })
     };
 
@@ -530,24 +546,36 @@
         let app = new Vue({
             el: '#download-html', data: {
                 isVisible: false, //
-                isPopupVisible: false, selectedLabel: GM_getValue("selectedLabel", 0), // 默认下载位置索引
+                isPopupVisible: false,
+                selectedLabel: GM_getValue("selectedLabel", 0), // 默认下载位置索引
                 config: {
                     address: GM_getValue("address", ""), // qBittorrent Web UI 地址 http://127.0.0.1:8080
                     username: GM_getValue("username", ""), // qBittorrent Web UI的用户名
                     password: GM_getValue("password", ""), // qBittorrent Web UI的密码
                     saveLocations: GM_getValue("saveLocations", [{ label: "默认", value: "" }]), // 下载目录 默认 savePath 兼容老版本
                     separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
-                    autoStartDownload: GM_getValue("autoStartDownload", true)
-                }, torrentName: torrentName, title: pt.getTorrentTitle(), subTitle: pt.getTorrentSubTitle(), // 拖动div
-                isDragging: false, initialX: 0, initialY: 0, position: { x: 0, y: 0 },
-            }, methods: {
+                    autoStartDownload: GM_getValue("autoStartDownload", true),
+                    autoCloseWindow: GM_getValue("autoCloseWindow", false) // 自动关闭窗口，只在窗口只有这个页面时生效
+                },
+                torrentName: torrentName,
+                title: pt.getTorrentTitle(),
+                subTitle: pt.getTorrentSubTitle(),
+                // 拖动div
+                isDragging: false,
+                initialX: 0,
+                initialY: 0,
+                position: { x: 0, y: 0 },
+            },
+            methods: {
                 toggleConfigPopup() {
                     // 切换元素的显示与隐藏
                     this.isVisible = !this.isVisible;
-                }, togglePopup() {
+                },
+                togglePopup() {
                     // 切换元素的显示与隐藏
                     this.isPopupVisible = !this.isPopupVisible;
-                }, configSave() {
+                },
+                configSave() {
 
                     this.toggleConfigPopup();
 
@@ -567,13 +595,19 @@
                         console.log("refresh vue data.")
                         config = this.config;
                     }).catch((e) => {
-                        alert(e);
+                        cocoMessage.error(e, 3000, true);
                     })
 
-                }, autoStartDownloadCheckboxChange() {
+                },
+                autoStartDownloadCheckboxChange() {
                     console.log('Checkbox state changed. New state:', this.config.autoStartDownload);
                     GM_setValue("autoStartDownload", this.config.autoStartDownload);
-                }, download(inputValue) {
+                },
+                autoCloseWindowCheckboxChange() {
+                    console.log('Checkbox state changed. New state:', this.config.autoCloseWindow);
+                    GM_setValue("autoCloseWindow", this.config.autoCloseWindow);
+                },
+                download(inputValue) {
 
                     console.log("InputValue: ", inputValue)
 
@@ -589,20 +623,20 @@
                     let byteCount = new TextEncoder().encode(inputValue).length;
                     if (byteCount > 255) {
                         console.log(`字节数超过255，有 ${byteCount} 个字节。`);
-                        alert(`字节数超过255，一个中文占用3字节，当前字节数:${byteCount}`);
+                        cocoMessage.error(`字节数超过255，一个中文占用3字节，当前字节数：${byteCount}`, 10000, true);
                         return;
                     }
 
                     config = this.config;
 
                     if (this.config.saveLocations.length == 0 || this.selectedLabel >= this.config.saveLocations.length) {
-                        alert(`必须选择下载位置，如果没有下载位置请点击脚本图标进行配置。`)
+                        cocoMessage.error("必须选择下载位置，如果没有下载位置请点击脚本图标进行配置。", 10000, true);
                         return;
                     }
 
                     let savePath = this.config.saveLocations[this.selectedLabel].value;
                     if (!savePath) {
-                        alert(`下载路径为空！`)
+                        cocoMessage.error("下载路径为空！", 10000, true);
                         return;
                     }
                     console.log("下载路径:", savePath)
@@ -610,12 +644,15 @@
                     // 记住上次下载位置
                     GM_setValue("selectedLabel", this.selectedLabel);
 
-                    download(inputValue, savePath, pt.getTorrentHash(), pt.getTorrentUrl());
-                }, addLine() {
+                    download(inputValue, savePath, pt.getTorrentHash(), pt.getTorrentUrl(), this.config.autoCloseWindow);
+                },
+                addLine() {
                     this.config.saveLocations.push({ label: "", value: "" })
-                }, saveLine() {
+                },
+                saveLine() {
                     GM_setValue("saveLocations", this.config.saveLocations)
-                }, delLine(index) {
+                },
+                delLine(index) {
                     console.log("删除元素:", this.config.saveLocations[index])
                     this.config.saveLocations.splice(index, 1)
                     if (this.selectedLabel >= this.config.saveLocations.length) {
@@ -636,11 +673,13 @@
                         window.addEventListener('mousemove', this.drag);
                         window.addEventListener('mouseup', this.stopDragging);
                     }
-                }, drag(e) {
+                },
+                drag(e) {
                     if (!this.isDragging) return;
                     this.position.x = e.clientX - this.initialX;
                     this.position.y = e.clientY - this.initialY;
-                }, stopDragging() {
+                },
+                stopDragging() {
                     this.isDragging = false;
                     // 抓住鼠标样式
                     // this.$el.querySelector('#popup').style.cursor = 'grab';
@@ -885,6 +924,12 @@
                             </td>
                         </tr>
                         <tr>
+                            <th title="打开状态时，如果新的窗口只有这一个页面，则在下载并重命名成功后会自动关闭该窗口。">智能关窗:</th>
+                            <td class="t-text">
+                                <input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="autoCloseWindowCheckboxChange">
+                            </td>
+                        </tr>
+                        <tr>
                             <th></th>
                             <td class="t-text"><button type="button" id="configSave" @click="configSave($event)">保存</button><button  type="button" @click="toggleConfigPopup()">关闭</button></td>
                         </tr>
@@ -988,6 +1033,7 @@
     //     });
     //     originOpen.apply(this, arguments);
     // };
+
 
 
     function main() {

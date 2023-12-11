@@ -10,7 +10,9 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
   
 - 种子名和磁盘文件名同步修改 (不影响上传)
   
-- 支持选择目录
+- 支持选择下载位置
+
+- 支持下载完后智能关闭下载页面 (可设置)
   
 - 自动取代 Windows/Linux 不支持字符为空格
 
