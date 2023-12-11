@@ -1,10 +1,11 @@
 // ==UserScript==
-// @name         测试脚本
-// @namespace    种子下载工具-测试脚本
+// @name         种子下载工具
+// @namespace    种子下载工具
 // @description  在种子详情页添加下载按钮，点击后可以选择​【标题|种子名|副标题】​并将种子添加到 qBittorrent，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
-// @version      3.8
+// @version      3.9
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
+// @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
 // @match        https://*/details.php*
 // @match        https://*/*/details.php*
 // @match        https://test2.m-team.cc/detail/*
@@ -1040,12 +1041,6 @@
 
 
     function main() {
-
-        let script = document.createElement('script');
-        script.setAttribute('type', 'text/javascript');
-        script.src = "https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@3.7/coco-message.js";
-        document.documentElement.appendChild(script);
-
         if (getSite() || isNexusPHP()) {
             setStyle();
             setHtml();
