@@ -28,11 +28,6 @@
 (function () {
     'use strict';
 
-    let script = document.createElement('script');
-    script.setAttribute('type', 'text/javascript');
-    script.src = "https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@3.7/coco-message.js";
-    document.documentElement.appendChild(script);
-
     let config = {}
 
     /**
@@ -477,8 +472,10 @@
                             if (!saveLocations || saveLocations.length == 0 || (saveLocations.length == 1 && saveLocations[0].label == "默认" && !saveLocations[0].value)) {
                                 GM_setValue("saveLocations", [{ label: "默认", value: save_path }])
                                 console.log("设置默认保存位置为 ", save_path)
+                                resolve("保存配置成功，并设置了默认下载位置！");
+                                return;
                             }
-                            resolve();
+                            resolve("保存配置成功！");
                         }, onerror: function (error) {
                             console.error('获取系统信息失败！', error);
                             reject("获取系统信息失败！")
@@ -486,7 +483,7 @@
                     });
                 })
             }).then(m => {
-                resolve()
+                resolve(m)
             }).catch((e) => {
                 console.log(e);
                 // alert(e);
@@ -592,11 +589,12 @@
                     });
 
                     config = this.config;
-                    setFileSystemSeparatorAndDefaultSavePath().then(() => {
+                    setFileSystemSeparatorAndDefaultSavePath().then((m) => {
                         this.config.saveLocations = GM_getValue("saveLocations", []);
                         this.config.separator = GM_getValue("separator", null);
                         console.log("refresh vue data.")
                         config = this.config;
+                        cocoMessage.success(m, 3000);
                     }).catch((e) => {
                         cocoMessage.error(e, 10000, true);
                     })
@@ -1042,6 +1040,12 @@
 
 
     function main() {
+
+        let script = document.createElement('script');
+        script.setAttribute('type', 'text/javascript');
+        script.src = "https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@3.7/coco-message.js";
+        document.documentElement.appendChild(script);
+
         if (getSite() || isNexusPHP()) {
             setStyle();
             setHtml();
