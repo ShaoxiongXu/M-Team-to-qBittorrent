@@ -11,6 +11,12 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
     className: "coco-msg-stage"
   });
 
+  /**
+   * 
+   * @param {Object} args 
+   * @param {Array} children 
+   * @returns 
+   */
   function c(args, children) {
     var el = document.createElement("div");
 
@@ -87,6 +93,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
     }
   }
 
+  /**
+   * 初始化参数对象，包含默认的消息、持续时间、是否显示关闭按钮等配置
+   */
   var initArgs = {
     msg: "",
     duration: 2000,
@@ -149,37 +158,49 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
     return createMsgEl(args);
   }
 
+  /**
+   * 创建消息元素
+   * 
+   * duration == 0 或者 showClose == true 显示关闭按钮
+   * 
+   * duration = 300, showClose == true 时, 可自动关闭也可手动关闭。
+   * 
+   * @param {object} args 
+   * @returns 
+   */
   function createMsgEl(args) {
     var type = args.type,
       duration = args.duration,
       msg = args.msg,
       showClose = args.showClose,
       onClose = args.onClose;
-    var closable = duration === 0;
+    var closable = duration === 0 || showClose == true;
     var iconObj = getIconObj();
 
     if (type == "loading") {
       msg = msg === "" ? "正在加载，请稍后" : msg;
-      closable = showClose;
       duration = 0;
     }
 
+    // 创建消息提示框的 DOM 元素 el
     var el = c({
       className: "coco-msg-wrapper"
-    }, [c({
-      className: "coco-msg coco-msg-fade-in " + type
-    }, [c({
-      className: "coco-msg-icon"
-    }, iconObj[type]), c({
-      className: "coco-msg-content"
-    }, msg), c({
-      className: "coco-msg-wait " + (closable ? "coco-msg-pointer" : ""),
-      _click: function _click() {
-        if (closable) {
-          closeMsg(el, onClose);
-        }
-      }
-    }, getMsgRight(closable))])]);
+    }, [
+      c({ className: "coco-msg coco-msg-fade-in " + type },
+        [
+          c({ className: "coco-msg-icon" }, iconObj[type]),
+          c({ className: "coco-msg-content" }, msg),
+          c({
+            className: "coco-msg-wait " + (closable ? "coco-msg-pointer" : ""), _click: function _click() {
+              if (closable) {
+                closeMsg(el, onClose); // 点击可关闭的消息时执行关闭动作
+              }
+            }
+          }, getMsgRight(closable)) // 获取右侧的元素，包括关闭按钮或加载状态图标
+        ])
+    ]);
+
+    // 获取消息元素中的加载状态图标元素 圆圈
     var anm = el.querySelector(".coco-msg__circle");
 
     if (anm) {
@@ -187,7 +208,9 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
         animation: "coco-msg_" + type + " " + duration + "ms linear"
       });
 
+      // 如果浏览器支持 animationend 事件
       if ("onanimationend" in window) {
+        // 监听动画结束事件，执行关闭消息的动作
         addAnimationEnd(anm, function () {
           closeMsg(el, onClose);
         });
@@ -198,31 +221,43 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       }
     }
 
-    if (type == "loading" && duration !== 0) {
+    // showClose == true and duration !== 0
+    if (closable && duration !== 0) {
       setTimeout(function () {
         closeMsg(el, onClose);
       }, duration);
     }
 
+    // 如果消息容器中没有子元素, 将消息容器添加到文档的 body 中
     if (!msgWrapper.children.length) {
       document.body.appendChild(msgWrapper);
     }
 
+    // 将消息提示框元素 el 添加到消息容器中
     msgWrapper.appendChild(el);
+
+    // 设置消息提示框元素 el 的高度为其实际高度
     css(el, {
       height: el.offsetHeight + "px"
     });
+
+    // 延迟一定时间后，移除消息提示框的渐入动画类，以防止动画影响后续动作
     setTimeout(function () {
       removeClass(el.children[0], "coco-msg-fade-in");
     }, 300);
 
     if (type == "loading") {
-      return function () {
+      return function () { // 返回一个函数，该函数在调用时会执行关闭消息的动作
         closeMsg(el, onClose);
       };
     }
   }
 
+  /**
+   * 获取右侧的元素，包括关闭按钮或加载状态图标
+   * @param {boolean} showClose 
+   * @returns 
+   */
   function getMsgRight(showClose) {
     if (showClose) {
       return "\n    <svg class=\"coco-msg-close\" viewBox=\"0 0 1024 1024\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" p-id=\"5514\"><path d=\"M810 274l-238 238 238 238-60 60-238-238-238 238-60-60 238-238-238-238 60-60 238 238 238-238z\" p-id=\"5515\"></path></svg>\n    ";
@@ -237,21 +272,26 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
       padding: 0,
       height: 0
     });
+    // 给消息提示框添加渐出动画类
     addClass(el.children[0], "coco-msg-fade-out");
+
+    // 执行回调函数 cb（如果存在）
     cb && cb();
     setTimeout(function () {
       if (!el) return;
       var has = false;
 
       for (var i = 0; i < msgWrapper.children.length; i++) {
-        if (msgWrapper.children[i] === el) {
+        if (msgWrapper.children[i] === el) { // 如果当前子元素是要关闭的消息提示框 el
           has = true;
         }
       }
 
+      // 如果标志变量 has 为 true，表示消息容器中确实包含了要关闭的消息提示框, 移除消息提示框元素 el
       has && removeChild(el);
       el = null;
 
+      // 如果消息容器中已经没有子元素, 将消息容器从文档中移除
       if (!msgWrapper.children.length) {
         has && removeChild(msgWrapper);
       }
@@ -295,7 +335,7 @@ function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "functi
 
       var _css = doc.createElement('style');
 
-      var cssStr = "\n\n[class|=coco],[class|=coco]::after,[class|=coco]::before{box-sizing:border-box;outline:0}.coco-msg-progress{width:13px;height:13px}.coco-msg__circle{stroke-width:2;stroke-linecap:square;fill:none;transform:rotate(-90deg);transform-origin:center}.coco-msg-stage:hover .coco-msg__circle{-webkit-animation-play-state:paused!important;animation-play-state:paused!important}.coco-msg__background{stroke-width:2;fill:none}.coco-msg-stage{position:fixed;top:20px;left:50%;width:auto;transform:translate(-50%,0);z-index:3000}.coco-msg-wrapper{position:relative;left:50%;transform:translate(-50%,0);transform:translate3d(-50%,0,0);transition:height .3s ease,padding .3s ease;padding:6px 0;will-change:transform,opacity}.coco-msg{padding:15px 21px;border-radius:3px;position:relative;left:50%;transform:translate(-50%,0);transform:translate3d(-50%,0,0);display:flex;align-items:center}.coco-msg-content,.coco-msg-icon,.coco-msg-wait{display:inline-block}.coco-msg-icon{position:relative;width:13px;height:13px;border-radius:100%;display:flex;justify-content:center;align-items:center}.coco-msg-icon svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:11px;height:11px}.coco-msg-wait{width:20px;height:20px;position:relative;fill:#4eb127}.coco-msg-wait svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.coco-msg-close{width:14px;height:14px}.coco-msg-content{margin:0 10px;min-width:240px;text-align:left;font-size:14px;font-weight:500;font-family:-apple-system,Microsoft Yahei,sans-serif;text-shadow:0 0 1px rgba(0,0,0,.01)}.coco-msg.info{color:#0fafad;background-color:#e7fdfc;box-shadow:0 0 2px 0 rgba(0,1,1,.01),0 0 0 1px #c0faf9}.coco-msg.info .coco-msg-icon{background-color:#0fafad}.coco-msg.success{color:#4ebb23;background-color:#f3ffe8;box-shadow:0 0 2px 0 rgba(0,1,0,.01),0 0 0 1px #d9f8bb}.coco-msg.success .coco-msg-icon{background-color:#4ebb23}.coco-msg.warning{color:#f1b306;background-color:#fff9eb;box-shadow:0 0 2px 0 rgba(1,1,0,.01),0 0 0 1px #fcf2cd}.coco-msg.warning .coco-msg-icon{background-color:#f1b306}.coco-msg.error{color:#f34b51;background-color:#fff7f7;box-shadow:0 0 2px 0 rgba(1,0,0,.01),0 0 0 1px #ffe3e3}.coco-msg.error .coco-msg-icon{background-color:#f34b51}.coco-msg.loading{color:#0fafad;background-color:#e7fdfc;box-shadow:0 0 2px 0 rgba(0,1,1,.01),0 0 0 1px #c2faf9}.coco-msg_loading{flex-shrink:0;width:20px;height:20px;position:relative}.coco-msg-circular{-webkit-animation:coco-msg-rotate 2s linear infinite both;animation:coco-msg-rotate 2s linear infinite both;transform-origin:center center;height:18px!important;width:18px!important}.coco-msg-path{stroke-dasharray:1,200;stroke-dashoffset:0;stroke:#0fafad;-webkit-animation:coco-msg-dash 1.5s ease-in-out infinite;animation:coco-msg-dash 1.5s ease-in-out infinite;stroke-linecap:round}@-webkit-keyframes coco-msg-rotate{100%{transform:translate(-50%,-50%) rotate(360deg)}}@keyframes coco-msg-rotate{100%{transform:translate(-50%,-50%) rotate(360deg)}}@-webkit-keyframes coco-msg-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:89,200;stroke-dashoffset:-35px}100%{stroke-dasharray:89,200;stroke-dashoffset:-124px}}@keyframes coco-msg-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:89,200;stroke-dashoffset:-35px}100%{stroke-dasharray:89,200;stroke-dashoffset:-124px}}.coco-msg.info .coco-msg-wait{fill:#0fafad}.coco-msg.success .coco-msg-wait{fill:#4ebb23}.coco-msg.warning .coco-msg-wait{fill:#f1b306}.coco-msg.error .coco-msg-wait{fill:#f34b51}.coco-msg.loading .coco-msg-wait{fill:#0fafad}.coco-msg-pointer{cursor:pointer}@-webkit-keyframes coco-msg_info{0%{stroke:#0fafad}to{stroke:#0fafad;stroke-dasharray:0 100}}@keyframes coco-msg_info{0%{stroke:#0fafad}to{stroke:#0fafad;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_success{0%{stroke:#4eb127}to{stroke:#4eb127;stroke-dasharray:0 100}}@keyframes coco-msg_success{0%{stroke:#4eb127}to{stroke:#4eb127;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_warning{0%{stroke:#fcbc0b}to{stroke:#fcbc0b;stroke-dasharray:0 100}}@keyframes coco-msg_warning{0%{stroke:#fcbc0b}to{stroke:#fcbc0b;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_error{0%{stroke:#eb262d}to{stroke:#eb262d;stroke-dasharray:0 100}}@keyframes coco-msg_error{0%{stroke:#eb262d}to{stroke:#eb262d;stroke-dasharray:0 100}}.coco-msg-fade-in{-webkit-animation:coco-msg-fade .2s ease-out both;animation:coco-msg-fade .2s ease-out both}.coco-msg-fade-out{animation:coco-msg-fade .3s linear reverse both}@-webkit-keyframes coco-msg-fade{0%{opacity:0;transform:translate(-50%,0);transform:translate3d(-50%,-80%,0)}to{opacity:1;transform:translate(-50%,0);transform:translate3d(-50%,0,0)}}@keyframes coco-msg-fade{0%{opacity:0;transform:translate(-50%,0);transform:translate3d(-50%,-80%,0)}to{opacity:1;transform:translate(-50%,0);transform:translate3d(-50%,0,0)}}\n        ";
+      var cssStr = "\n\n[class|=coco],[class|=coco]::after,[class|=coco]::before{box-sizing:border-box;outline:0}.coco-msg-progress{width:13px;height:13px}.coco-msg__circle{stroke-width:2;stroke-linecap:square;fill:none;transform:rotate(-90deg);transform-origin:center}.coco-msg-stage:hover .coco-msg__circle{-webkit-animation-play-state:paused!important;animation-play-state:paused!important}.coco-msg__background{stroke-width:2;fill:none}.coco-msg-stage{position:fixed;top:20px;left:50%;width:auto;transform:translate(-50%,0);z-index:3000}.coco-msg-wrapper{position:relative;left:50%;transform:translate(-50%,0);transform:translate3d(-50%,0,0);transition:height .3s ease,padding .3s ease;padding:6px 0;will-change:transform,opacity}.coco-msg{padding:15px 21px;border-radius:3px;position:relative;left:50%;transform:translate(-50%,0);transform:translate3d(-50%,0,0);display:flex;align-items:center}.coco-msg-content,.coco-msg-icon,.coco-msg-wait{display:inline-block}.coco-msg-icon{position:relative;width:13px;height:13px;border-radius:100%;display:flex;justify-content:center;align-items:center}.coco-msg-icon svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:11px;height:11px}.coco-msg-wait{width:20px;height:20px;position:relative;fill:#4eb127}.coco-msg-wait svg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)}.coco-msg-close{width:14px;height:14px}.coco-msg-content{line-height: 14px;margin:0 10px;min-width:240px;text-align:left;font-size:14px;font-weight:500;font-family:-apple-system,Microsoft Yahei,sans-serif;text-shadow:0 0 1px rgba(0,0,0,.01)}.coco-msg.info{color:#0fafad;background-color:#e7fdfc;box-shadow:0 0 2px 0 rgba(0,1,1,.01),0 0 0 1px #c0faf9}.coco-msg.info .coco-msg-icon{background-color:#0fafad}.coco-msg.success{color:#4ebb23;background-color:#f3ffe8;box-shadow:0 0 2px 0 rgba(0,1,0,.01),0 0 0 1px #d9f8bb}.coco-msg.success .coco-msg-icon{background-color:#4ebb23}.coco-msg.warning{color:#f1b306;background-color:#fff9eb;box-shadow:0 0 2px 0 rgba(1,1,0,.01),0 0 0 1px #fcf2cd}.coco-msg.warning .coco-msg-icon{background-color:#f1b306}.coco-msg.error{color:#f34b51;background-color:#fff7f7;box-shadow:0 0 2px 0 rgba(1,0,0,.01),0 0 0 1px #ffe3e3}.coco-msg.error .coco-msg-icon{background-color:#f34b51}.coco-msg.loading{color:#0fafad;background-color:#e7fdfc;box-shadow:0 0 2px 0 rgba(0,1,1,.01),0 0 0 1px #c2faf9}.coco-msg_loading{flex-shrink:0;width:20px;height:20px;position:relative}.coco-msg-circular{-webkit-animation:coco-msg-rotate 2s linear infinite both;animation:coco-msg-rotate 2s linear infinite both;transform-origin:center center;height:18px!important;width:18px!important}.coco-msg-path{stroke-dasharray:1,200;stroke-dashoffset:0;stroke:#0fafad;-webkit-animation:coco-msg-dash 1.5s ease-in-out infinite;animation:coco-msg-dash 1.5s ease-in-out infinite;stroke-linecap:round}@-webkit-keyframes coco-msg-rotate{100%{transform:translate(-50%,-50%) rotate(360deg)}}@keyframes coco-msg-rotate{100%{transform:translate(-50%,-50%) rotate(360deg)}}@-webkit-keyframes coco-msg-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:89,200;stroke-dashoffset:-35px}100%{stroke-dasharray:89,200;stroke-dashoffset:-124px}}@keyframes coco-msg-dash{0%{stroke-dasharray:1,200;stroke-dashoffset:0}50%{stroke-dasharray:89,200;stroke-dashoffset:-35px}100%{stroke-dasharray:89,200;stroke-dashoffset:-124px}}.coco-msg.info .coco-msg-wait{fill:#0fafad}.coco-msg.success .coco-msg-wait{fill:#4ebb23}.coco-msg.warning .coco-msg-wait{fill:#f1b306}.coco-msg.error .coco-msg-wait{fill:#f34b51}.coco-msg.loading .coco-msg-wait{fill:#0fafad}.coco-msg-pointer{cursor:pointer}@-webkit-keyframes coco-msg_info{0%{stroke:#0fafad}to{stroke:#0fafad;stroke-dasharray:0 100}}@keyframes coco-msg_info{0%{stroke:#0fafad}to{stroke:#0fafad;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_success{0%{stroke:#4eb127}to{stroke:#4eb127;stroke-dasharray:0 100}}@keyframes coco-msg_success{0%{stroke:#4eb127}to{stroke:#4eb127;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_warning{0%{stroke:#fcbc0b}to{stroke:#fcbc0b;stroke-dasharray:0 100}}@keyframes coco-msg_warning{0%{stroke:#fcbc0b}to{stroke:#fcbc0b;stroke-dasharray:0 100}}@-webkit-keyframes coco-msg_error{0%{stroke:#eb262d}to{stroke:#eb262d;stroke-dasharray:0 100}}@keyframes coco-msg_error{0%{stroke:#eb262d}to{stroke:#eb262d;stroke-dasharray:0 100}}.coco-msg-fade-in{-webkit-animation:coco-msg-fade .2s ease-out both;animation:coco-msg-fade .2s ease-out both}.coco-msg-fade-out{animation:coco-msg-fade .3s linear reverse both}@-webkit-keyframes coco-msg-fade{0%{opacity:0;transform:translate(-50%,0);transform:translate3d(-50%,-80%,0)}to{opacity:1;transform:translate(-50%,0);transform:translate3d(-50%,0,0)}}@keyframes coco-msg-fade{0%{opacity:0;transform:translate(-50%,0);transform:translate3d(-50%,-80%,0)}to{opacity:1;transform:translate(-50%,0);transform:translate3d(-50%,0,0)}}\n        ";
       _css.innerHTML = cssStr;
 
       if (head.children.length) {
