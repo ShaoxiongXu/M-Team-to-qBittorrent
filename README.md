@@ -46,12 +46,14 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 ### 脚本配置
 
 <img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/f92f2356-402a-41a4-a8b0-d6a163e5bac0" alt="image" style="zoom: 50%;" />
-<img src="https://github.com/ShaoxiongXu/script/assets/127823819/9ce2da66-8fbc-4511-8792-54027098f4d4" alt="image" style="zoom:50%;" />
 
-**Windows示例（旧）**
+**Linux NAS 示例**
+<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/5d309a74-0a36-46f9-b292-cf25c9d9567b" alt="image" style="zoom:50%;" />
 
-<img src="https://github.com/ShaoxiongXu/script/assets/127823819/8442df0a-692d-41e6-a25f-4e7e9b9d7f9d" alt="image" style="zoom:50%;" />
 
+**Windows 示例**
+
+<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/918ee0aa-9d58-4bf8-be81-0f020ef4e300" alt="image" style="zoom:50%;" />
 
 
 ### 种子详情页点击下载
