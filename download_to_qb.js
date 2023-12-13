@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         种子下载工具
-// @namespace    种子下载工具
+// @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在种子详情页添加下载按钮，点击后可以选择​【标题|种子名|副标题】​并将种子添加到 qBittorrent，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
 // @version      3.9
 // @icon         https://www.qbittorrent.org/favicon.svg
