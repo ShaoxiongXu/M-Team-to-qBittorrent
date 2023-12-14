@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
-// @description  在种子详情页添加下载按钮，点击后可以选择 【标题|种子名|副标题】 并将种子添加到 qBittorrent，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
-// @version      4.0
+// @description  在种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
+// @version      4.1
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -192,10 +192,10 @@
                         }
 
                         console.log('Login Response:', response.responseText);
-                        resolve("登录成功！")
+                        resolve("请求成功！")
                     }, onerror: function (error) { // 请求失败
                         console.error('请求发生错误:', error);
-                        reject("登录失败！");
+                        reject("qBittorrent 无响应！");
                     }
                 });
             })
@@ -370,7 +370,7 @@
                     return Promise.retry(() => getTorrentInfo(hash), 60, 1500);
                 }).then((data) => { // 文件重命名
                     console.log(data.message);
-                    if(data.oldFileName === rename) {
+                    if (data.oldFileName === rename) {
                         console.log("文件名相同无需修改");
                         return;
                     }
@@ -464,7 +464,7 @@
                     let data = JSON.parse(response.responseText);
                     console.log("session-get: ", data)
                     if (data.result !== "success") {
-                        reject(`下载失败：${data.result}`);
+                        reject(`请求失败：${data.result}`);
                         return;
                     }
 
@@ -474,7 +474,7 @@
                     })
                 }, function (error) { // 请求失败
                     console.error('请求发生错误:', error);
-                    reject("下载失败，请求发生错误！");
+                    reject("Transmission 无响应！");
                 });
             })
         }
@@ -551,7 +551,7 @@
                 }).then((data) => {
                     console.log(data.message)
                     duplicate = data.duplicate;
-                    if(data.name === rename) {
+                    if (data.name === rename) {
                         console.log("文件名相同无需修改");
                         return;
                     }
@@ -708,14 +708,15 @@
     function init() {
         let torrentName = PT.getTorrentName();
         let app = new Vue({
-            el: '#download-html', data: {
+            el: '#script-div',
+            data: {
                 isVisible: false, //
                 isPopupVisible: false,
                 selectedLabel: GM_getValue("selectedLabel", 0), // 默认下载位置索引
                 config: {
-                    address: GM_getValue("address", ""), // qBittorrent Web UI 地址 http://127.0.0.1:8080
-                    username: GM_getValue("username", ""), // qBittorrent Web UI的用户名
-                    password: GM_getValue("password", ""), // qBittorrent Web UI的密码
+                    address: GM_getValue("address", ""), //  Web UI 地址 http://127.0.0.1:8080
+                    username: GM_getValue("username", ""), //  Web UI的用户名
+                    password: GM_getValue("password", ""), //  Web UI的密码
                     saveLocations: GM_getValue("saveLocations", [{label: "默认", value: ""}]), // 下载目录 默认 savePath 兼容老版本
                     separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
                     autoStartDownload: GM_getValue("autoStartDownload", true),
@@ -737,6 +738,9 @@
                 },
                 togglePopup() {
                     // 切换元素的显示与隐藏
+                    if (!this.isPopupVisible) {
+                        cocoMessage.destroyAll();
+                    }
                     this.isPopupVisible = !this.isPopupVisible;
                 },
                 configSave() {
@@ -869,29 +873,26 @@
                     window.removeEventListener('mousemove', this.drag);
                     window.removeEventListener('mouseup', this.stopDragging);
                 },
-            }, computed: {
+            },
+            computed: {
                 calculateStyles() {
-                    if (this.position.x === 0 && this.position.y === 0) {
-                        const parentWidth = this.$el.querySelector('#popup').offsetWidth;
-                        const parentHeight = this.$el.querySelector('#popup').offsetHeight;
-
-                        const translateX = -50 * parentWidth / 100;
-                        const translateY = -50 * parentHeight / 100;
-                        // console.log("translateX", translateX)
-                        // console.log("translateY", translateY)
-                        this.position.x = translateX;
-                        this.position.y = translateY;
-                    }
                     return {
                         transform: `translate(${this.position.x}px, ${this.position.y}px)`,
+                        visibility: this.isPopupVisible ? 'visible' : 'hidden'
                     };
                 },
             },
-        })
-
-        document.getElementById("downloadButton").addEventListener('click', function () {
-            app.isPopupVisible = true;
-            cocoMessage.destroyAll();
+            mounted() {
+                // 设置下载框默认位置
+                let element = this.$el.querySelector('#popup')
+                const translateX = -50 * element.offsetWidth / 100;
+                const translateY = -50 * element.offsetHeight / 100;
+                console.log("translateX", translateX)
+                console.log("translateY", translateY)
+                this.position.x = translateX;
+                this.position.y = translateY;
+                element.style.position = `translate(${this.position.x}px, ${this.position.y}px)`;
+            },
         })
 
         GM_registerMenuCommand("点击这里进行配置", function () {
@@ -923,7 +924,6 @@
                 border-bottom: #000000 1px solid;
             }
             .download-html .popup {
-                width: auto;
                 min-width: 550px;
                 height: auto;
                 min-height: 50px;
@@ -1041,149 +1041,148 @@
 
     function setHtml() {
 
-        // 设置下载按钮
-        let downloadButton = ` <div class="script-div"><button id="downloadButton">QBitorrent下载</button><div id='download-html' class='download-html'></div></div>`;
-        if (isNexusPHP()) {
-            document.querySelector("#outer img.dt_download").closest("td").innerHTML += downloadButton;
-        } else {
-            document.querySelector("body").innerHTML += downloadButton;
-        }
+        let box = isNexusPHP() ? document.querySelector("#outer img.dt_download").closest("td") : document.querySelector("body");
 
-        document.getElementById("download-html").innerHTML = `
-            <div id="configPopup"  class="popup" style="z-index: 2;" v-show="isVisible">
-                <table>
-                    <thead style="height: 3em;">
-                        <tr>
-                            <th colspan="3" style="text-align: center;">请进行 qBittorrent 配置 </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th>客户端:</th>
-                            <td class="t-text">
-                                <div style="flex-wrap: wrap;">
-                                    <label style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;">
-                                        <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="config.client" value="qbittorrent">
-                                        qBittorrent
-                                    </label>
-                                    <label style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;">
-                                        <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="config.client" value="transmission">
-                                        Transmission
-                                    </label>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>地址:</th>
-                            <td class="t-text">
-                                <input class="textinput" autocomplete="off" type="text" placeholder="http://127.0.0.1:8080" v-model="config.address">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>用户名:</th>
-                            <td class="t-text">
-                                <input class="textinput" autocomplete="off" type="text" placeholder="qBittorrent 用户名" v-model="config.username">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>密码:</th>
-                            <td class="t-text">
-                                <input class="textinput" autocomplete="off" type="password" placeholder="qBittorrent 密码" v-model="config.password">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>下载位置:</th>
-                            <td class="t-text">
-                                <table>
-                                    <tbody>
-                                        <tr v-for="(item, index) in config.saveLocations" :key="index">
-                                            <td><input class="textinput" v-model="item.label" placeholder="标签"></td>
-                                            <td>
-                                                <input class="textinput" v-model="item.value" placeholder="下载路径">
-                                            </td>
-                                            <td ><button class="location-btn" type="button" @click="delLine(index)">删除</button></td>
-                                        </tr>
-                                        <tr>
-                                            <th></th>
-                                            <td style="border: 0;"></td>
-                                            <td style="border: 0;"><button class="location-btn" type="button" @click="addLine()">添加</button></td>
-                                            <!-- <button type="button" @click="saveLine($event)">保存</button> -->
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>自动开始:</th>
-                            <td class="t-text">
-                                <input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="autoStartDownloadCheckboxChange">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th title="打开状态时，如果新的窗口只有这一个页面，则在下载并重命名成功后会自动关闭该窗口。">智能关窗:</th>
-                            <td class="t-text">
-                                <input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="autoCloseWindowCheckboxChange">
-                            </td>
-                        </tr>
-                        <tr>
-                            <th></th>
-                            <td class="t-text"><button type="button" id="configSave" @click="configSave($event)">保存</button><button  type="button" @click="toggleConfigPopup()">关闭</button></td>
-                        </tr>
-                    </tbody>
-                </table>
+        box.innerHTML += `
+            &nbsp;<div id="script-div" class="script-div">
+            <button @click="togglePopup()">{{config.client}} 下载</button>
+            <div id='download-html' class='download-html'>
+                <div id="configPopup"  class="popup" style="z-index: 2;" v-show="isVisible">
+                    <table>
+                        <thead style="height: 3em;">
+                            <tr>
+                                <th colspan="3" style="text-align: center;">请进行下载配置 </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>客户端:</th>
+                                <td class="t-text">
+                                    <div style="flex-wrap: wrap;">
+                                        <label style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;">
+                                            <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="config.client" value="qbittorrent">
+                                            qBittorrent
+                                        </label>
+                                        <label style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;">
+                                            <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="config.client" value="transmission">
+                                            Transmission
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>地址:</th>
+                                <td class="t-text">
+                                    <input class="textinput" autocomplete="off" type="text" placeholder="http://127.0.0.1:8080" v-model="config.address">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>用户名:</th>
+                                <td class="t-text">
+                                    <input class="textinput" autocomplete="off" type="text" placeholder="Web UI 登录用户名" v-model="config.username">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>密码:</th>
+                                <td class="t-text">
+                                    <input class="textinput" autocomplete="off" type="password" placeholder="Web UI 登录密码" v-model="config.password">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>下载位置:</th>
+                                <td class="t-text">
+                                    <table>
+                                        <tbody>
+                                            <tr v-for="(item, index) in config.saveLocations" :key="index">
+                                                <td><input class="textinput" v-model="item.label" placeholder="标签"></td>
+                                                <td>
+                                                    <input class="textinput" v-model="item.value" placeholder="下载路径">
+                                                </td>
+                                                <td ><button class="location-btn" type="button" @click="delLine(index)">删除</button></td>
+                                            </tr>
+                                            <tr>
+                                                <th></th>
+                                                <td style="border: 0;"></td>
+                                                <td style="border: 0;"><button class="location-btn" type="button" @click="addLine()">添加</button></td>
+                                                <!-- <button type="button" @click="saveLine($event)">保存</button> -->
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>自动开始:</th>
+                                <td class="t-text">
+                                    <input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="autoStartDownloadCheckboxChange">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th title="打开状态时，如果新的窗口只有这一个页面，则在下载并重命名成功后会自动关闭该窗口。">智能关窗:</th>
+                                <td class="t-text">
+                                    <input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="autoCloseWindowCheckboxChange">
+                                </td>
+                            </tr>
+                            <tr>
+                                <th></th>
+                                <td class="t-text"><button type="button" id="configSave" @click="configSave($event)">保存</button><button  type="button" @click="toggleConfigPopup()">关闭</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+    
+                <div id="popup" class="popup draggable"  @mousedown="startDragging" style="z-index: 1;" :style="calculateStyles">
+                    <table>
+                        <thead style="height: 3em;">
+                            <tr>
+                                <th id="download-title" colspan="3">请选择文件名下载 </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>下载位置:</th>
+                                <td class="t-text" colspan="2" style="padding: 6px 6px 6px 6px;">
+                                    <div style="flex-wrap: wrap;">
+                                        <label :title="item.value" style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;" v-for="(item, index) in config.saveLocations" :key="index">
+                                            <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="selectedLabel" :value="index">
+                                            {{ item.label }}
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>种子名:</th>
+                                <td class="t-text">
+                                    <input :title="torrentName" class="textinput" v-model="torrentName">
+                                    <p>{{torrentName}}</p>
+                                </td>
+                                <td class="t-download"><button @click="download(torrentName)">下载</button></td>
+                            </tr>
+                            <tr>
+                                <th>主标题:</th>
+                                <td class="t-text">
+                                    <input :title="title" class="textinput" v-model="title">
+                                    <p>{{title}}</p>
+                                </td>
+                                <td class="t-download"><button @click="download(title)">下载</button></td>
+                            </tr>
+                            <tr>
+                                <th>副标题:</th>
+                                <td class="t-text">
+                                    <input :title="subTitle" class="textinput" v-model="subTitle">
+                                    <p>{{subTitle}}</p>
+                                </td>
+                                <td class="t-download"><button @click="download(subTitle)">下载</button></td>
+                            </tr>
+                            <tr>
+                                <th>自动开始:</th>
+                                <td class="t-text"><input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></td>
+                                <td class="t-download"><button @click="togglePopup()">关闭</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
-            <div id="popup" class="popup draggable"  @mousedown="startDragging" v-show="isPopupVisible" style="z-index: 1;" :style="calculateStyles">
-                <table>
-                    <thead style="height: 3em;">
-                        <tr>
-                            <th id="download-title" colspan="3">请选择文件名下载 </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th>下载位置:</th>
-                            <td class="t-text" colspan="2" style="padding: 6px 6px 6px 6px;">
-                                <div style="flex-wrap: wrap;">
-                                    <label :title="item.value" style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;" v-for="(item, index) in config.saveLocations" :key="index">
-                                        <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="selectedLabel" :value="index">
-                                        {{ item.label }}
-                                    </label>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>种子名:</th>
-                            <td class="t-text">
-                                <input :title="torrentName" class="textinput" v-model="torrentName">
-                                <p>{{torrentName}}</p>
-                            </td>
-                            <td class="t-download"><button @click="download(torrentName)">下载</button></td>
-                        </tr>
-                        <tr>
-                            <th>主标题:</th>
-                            <td class="t-text">
-                                <input :title="title" class="textinput" v-model="title">
-                                <p>{{title}}</p>
-                            </td>
-                            <td class="t-download"><button @click="download(title)">下载</button></td>
-                        </tr>
-                        <tr>
-                            <th>副标题:</th>
-                            <td class="t-text">
-                                <input :title="subTitle" class="textinput" v-model="subTitle">
-                                <p>{{subTitle}}</p>
-                            </td>
-                            <td class="t-download"><button @click="download(subTitle)">下载</button></td>
-                        </tr>
-                        <tr>
-                            <th>自动开始:</th>
-                            <td class="t-text"><input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></td>
-                            <td class="t-download"><button @click="togglePopup()">关闭</button></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        </div>
         `;
     }
 

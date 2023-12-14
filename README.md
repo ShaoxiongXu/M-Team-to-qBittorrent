@@ -1,10 +1,12 @@
-# 【油猴脚本】PT to qBittorrent 下载工具 【一键下载、重命名、指定下载位置】
+# 【油猴脚本】PT to qBittorrent|Transmission 下载工具 【一键下载、重命名、指定下载位置】
 
 GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent)
 
-【PT下载|team|mteam|馒头|NexusPHP】在种子详情页添加下载按钮，点击后可以选择​【标题|种子名|副标题】​并将种子添加到 qBittorrent，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
+【PT下载|team|mteam|馒头|NexusPHP】在种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent 或 Transmission，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
 
-<img src="https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47" alt="image" style="zoom: 33%;" />
+![image](https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47)
+
+- 支持下载到 qBittorrent 和 Transmission
 
 - 支持选择命名 （选择时也可以在输入框手动修改）
   
@@ -18,13 +20,13 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 - 文件名长度检测
 
-- 目前支持Linux(NAS) qBittorrent  Web UI 、Windows qBittorrent  Web UI
-
 - 理论支持所有 NexusPHP 架构站点
 
 - 目前仅测试北洋园、M-Team(馒头)、ptlsp 站点
 
 - qBittorrent 版本要求 ≥ v4.1
+
+- Transmission 版本要求 ≥ 3.0
 
 - 更多站点我也没号,**有 HDChina 或其他PT站 邀可以拉小弟一把**.本人TG:[@zhendi6](https://t.me/zhendi6)
   
@@ -34,13 +36,13 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 ### 安装
 
-脚本安装:[https://greasyfork.org/zh-CN/scripts/470727-m-team-to-qbittorrent-web-ui-%E4%B8%8B%E8%BD%BD%E5%B7%A5%E5%85%B7](https://greasyfork.org/zh-CN/scripts/470727-m-team-to-qbittorrent-web-ui-%E4%B8%8B%E8%BD%BD%E5%B7%A5%E5%85%B7)
+脚本安装:[https://greasyfork.org/zh-CN/scripts/470727](https://greasyfork.org/zh-CN/scripts/470727-%E7%A7%8D%E5%AD%90%E4%B8%8B%E8%BD%BD%E5%B7%A5%E5%85%B7)
 
 
 
 ### Windows 客户端需要打开 WebUI
 
-<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/4d8cf059-84b1-4ac7-82a6-9da27880ffc8" alt="20220714130923" style="zoom: 33%;" />
+![20220714130923](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/4d8cf059-84b1-4ac7-82a6-9da27880ffc8)
 
 
 ### 脚本配置
@@ -48,21 +50,21 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 <img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/f92f2356-402a-41a4-a8b0-d6a163e5bac0" alt="image" style="zoom: 50%;" />
 
 **Linux NAS 示例**
-<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/5d309a74-0a36-46f9-b292-cf25c9d9567b" alt="image" style="zoom:50%;" />
+![image](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/4cb66f1f-1063-495e-a267-9613a037b7b8)
 
 
 **Windows 示例**
 
-<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/918ee0aa-9d58-4bf8-be81-0f020ef4e300" alt="image" style="zoom:50%;" />
+![image](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/ddee873d-2f3c-414d-9dc0-52b64e50e415)
 
 
 ### 种子详情页点击下载
 
-<img src="https://github.com/ShaoxiongXu/script/assets/127823819/bc33dc63-6c9c-4086-8c53-3cdfb722c74b" alt="image" style="zoom: 33%;" />
+![image](https://github.com/ShaoxiongXu/script/assets/127823819/bc33dc63-6c9c-4086-8c53-3cdfb722c74b)
 
-<img src="https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47" alt="image" style="zoom:50%;" />
+![image](https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47)
 
-<img src="https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/e675eb78-d244-4d3a-b135-f0c9cc47290d" alt="image" style="zoom:50%;" />
+![image](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/e675eb78-d244-4d3a-b135-f0c9cc47290d)
 
 
 ## 新站点支持
