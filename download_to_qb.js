@@ -44,8 +44,8 @@
         "www.tjupt.org": "tjupt"
     }
 
+    let host = window.location.host;
     function getSite() {
-        let host = window.location.host;
         const entries = Object.entries(sites);
         for (const [key, value] of entries) {
             if (host.includes(key)) {
@@ -69,7 +69,7 @@
         },
         mteam: {
             getTorrentUrl: () => {
-                return window.location.protocol + "//" + window.location.hostname + document.evaluate("//a[text()='[IPv4+https]']", document).iterateNext().getAttribute("href");
+                return document.evaluate("//a[text()='[IPv4+https]']", document).iterateNext().href;
             }
         },
         ptlsp: {
@@ -77,39 +77,22 @@
         },
         tjupt: {
             getTorrentUrl: () => document.querySelector(`#direct_link`).getAttribute(`href`)
-        }, // 默认策略
+        },
+        // 默认策略
         defaultStrategy: {
             getTorrentUrl: () => {
                 let allLinks = document.querySelectorAll('#outer a');
-                // 使用 Array.prototype.find 查找第一个包含模糊文本的链接
+                // 查找第一个下载链接 link.href 会自动将相对路径转换为绝对路径，提供完整的 URL。
                 let firstMatchingLink = Array.from(allLinks).find(function (link) {
                     return /download.php\?id=[0-9]+&passkey=.+$/.test(link.href)
                         || /download.php\?downhash=[0-9]+\|.+$/.test(link.href);
                 });
-
-                if (firstMatchingLink) {
-                    let href = firstMatchingLink.getAttribute("href");
-                    if (href.startsWith("http")) {
-                        return href;
-                    }
-                    if (href.startsWith("/")) {
-                        return window.location.protocol + "//" + window.location.hostname + href;
-                    }
-                    return window.location.protocol + "//" + "/" + window.location.hostname + href;
-                } else {
-                    cocoMessage.error("未在页面找到下载链接！", 10000, true);
-                    return "";
-                }
+                return firstMatchingLink ? firstMatchingLink.href : "";
             },
             getTorrentHash: () => {
                 let text = document.getElementById("outer").innerText;
                 let match = text.match(/hash.?:\s([a-fA-F0-9]{40})/i);
-                if (!match) {
-                    cocoMessage.error("未在页面找到 Hash 值！", 10000, true);
-                    return;
-                }
-                // 输出匹配到的hash值
-                return match[1];
+                return match ? match[1] : "";
             },
             getTorrentTitle: () => {
                 return document.querySelector("#top").firstChild.nodeValue;
@@ -117,8 +100,7 @@
             getTorrentName: () => {
                 let str = document.querySelector("#outer td.rowfollow > a.index").innerText.trim()
                 console.log("原始种子名:", str);
-                let regex = /\.(.+)\./;
-                return regex.exec(str)[1];
+                return /\.(.+)\./.exec(str)[1];
             },
             getTorrentSubTitle: () => {
                 let subTitleTd = document.evaluate("//td[text()='副標題']", document).iterateNext()
@@ -791,12 +773,13 @@
 
                     if (!this.config.username || !this.config.password || !this.config.address) {
                         cocoMessage.error("请点击脚本图标进行下载配置", 10000, true);
-                        return
+                        return;
                     }
 
-                    if (!this.config.username || !this.config.password || !this.config.address) {
-                        cocoMessage.error("请点击脚本图标进行下载配置", 10000, true);
-                        return
+                    let hash = PT.getTorrentHash();
+                    if (!hash) {
+                        cocoMessage.error("未在页面找到 Hash 值！", 10000, true);
+                        return;
                     }
 
                     let byteCount = new TextEncoder().encode(inputValue).length;
@@ -830,7 +813,7 @@
 
                     // 记住上次下载位置
                     GM_setValue("selectedLabel", this.selectedLabel);
-                    Client[config.client].download(inputValue, savePath, PT.getTorrentHash(), torrentUrl, this.config.autoCloseWindow);
+                    Client[config.client].download(inputValue, savePath, hash, torrentUrl, this.config.autoCloseWindow);
                 },
                 addLine() {
                     this.config.saveLocations.push({label: "", value: ""})
