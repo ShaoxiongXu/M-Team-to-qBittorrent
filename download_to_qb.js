@@ -425,7 +425,7 @@
 
         function getBasicInfo() {
             return new Promise(async (resolve, reject) => {
-                request({"method": "session-get"}, async function (response) { // 请求成功
+                request({ "method": "session-get" }, async function (response) { // 请求成功
                     console.log('Login Response:', response.responseText);
                     if (response.status === 404) {
                         reject("请检查 Transmission 访问地址是否正确");
@@ -595,7 +595,7 @@
         // 设置默认文件夹
         let saveLocations = GM_getValue("saveLocations");
         if (!saveLocations || saveLocations.length === 0 || (saveLocations.length === 1 && saveLocations[0].label === "默认" && !saveLocations[0].value)) {
-            GM_setValue("saveLocations", [{label: "默认", value: save_path}])
+            GM_setValue("saveLocations", [{ label: "默认", value: save_path }])
             console.log("设置默认保存位置为 ", save_path)
             resolve("保存配置成功，并设置了默认下载位置！");
             return;
@@ -699,7 +699,7 @@
                     address: GM_getValue("address", ""), //  Web UI 地址 http://127.0.0.1:8080
                     username: GM_getValue("username", ""), //  Web UI的用户名
                     password: GM_getValue("password", ""), //  Web UI的密码
-                    saveLocations: GM_getValue("saveLocations", [{label: "默认", value: ""}]), // 下载目录 默认 savePath 兼容老版本
+                    saveLocations: GM_getValue("saveLocations", [{ label: "默认", value: "" }]), // 下载目录 默认 savePath 兼容老版本
                     separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
                     autoStartDownload: GM_getValue("autoStartDownload", true),
                     autoCloseWindow: GM_getValue("autoCloseWindow", false), // 自动关闭窗口，只在窗口只有这个页面时生效
@@ -712,7 +712,7 @@
                 isDragging: false,
                 initialX: 0,
                 initialY: 0,
-                position: {x: 0, y: 0},
+                position: { x: 0, y: 0 },
             },
             methods: {
                 toggleConfigPopup() {
@@ -816,7 +816,7 @@
                     Client[config.client].download(inputValue, savePath, hash, torrentUrl, this.config.autoCloseWindow);
                 },
                 addLine() {
-                    this.config.saveLocations.push({label: "", value: ""})
+                    this.config.saveLocations.push({ label: "", value: "" })
                 },
                 saveLine() {
                     GM_setValue("saveLocations", this.config.saveLocations)
@@ -926,7 +926,6 @@
             }
 
             .download-html .textinput {
-                width: 400px;
                 background-color: #e4e4e4;
                 border: 1px solid #587993;
                 border-radius: 4px;
@@ -934,13 +933,12 @@
                 display: inline-block;
                 position: absolute;
                 top: 50%;
-                left: 0;
+                left: -2px;
                 transform: translate(0, -50%);
-                width: 100%;
                 font-size: 12px;
                 line-height: 12px;
                 margin: 0 8px 0 8px;
-                width: calc(100% - 20px);
+                width: calc(100% - 18px);
             }
 
             .download-html .popup input:focus {
@@ -954,10 +952,14 @@
             }
 
             .download-html .popup tbody th {
+                min-width: 5em;
                 width: 5em;
+                text-align: right;
+                padding: 0 0.5em 0 0;
             }
 
             .download-html .popup .t-download {
+                min-width: 5em;
                 width: 5em;
             }
 
@@ -972,9 +974,12 @@
 
             .download-html .popup .t-text p {
                 visibility: hidden;
-                margin: 0.8em;
+                margin: 10px 15px;
                 font-size: 12px;
-                line-height: 1em;
+                line-height: 1.5em;
+                max-width: 600px;
+                white-space: nowrap;
+                overflow: hidden;
             }
             .download-html th {
                 text-align: center;
@@ -1011,6 +1016,11 @@
             .script-div {
                 display: inline-block;
             }
+
+            .save-location-table td:last-child {
+                width: 5em;
+                text-align: center;
+            }
         `)
 
         if (!isNexusPHP()) {
@@ -1030,7 +1040,7 @@
             &nbsp;<div id="script-div" class="script-div">
             <button @click="togglePopup()">{{config.client}} 下载</button>
             <div id='download-html' class='download-html'>
-                <div id="configPopup"  class="popup" style="z-index: 2;" v-show="isVisible">
+                <div id="configPopup"  class="popup config-popup" style="z-index: 2;" v-show="isVisible">
                     <table>
                         <thead style="height: 3em;">
                             <tr>
@@ -1074,7 +1084,7 @@
                             <tr>
                                 <th>下载位置:</th>
                                 <td class="t-text">
-                                    <table>
+                                    <table class="save-location-table">
                                         <tbody>
                                             <tr v-for="(item, index) in config.saveLocations" :key="index">
                                                 <td><input class="textinput" v-model="item.label" placeholder="标签"></td>
