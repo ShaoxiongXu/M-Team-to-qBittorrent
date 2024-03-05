@@ -2,7 +2,7 @@
 
 GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent)
 
-【PT下载|team|mteam|馒头|NexusPHP】在种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent 或 Transmission，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
+【PT助手|PT下载|team|mteam|馒头|NexusPHP】在种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent 或 Transmission，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
 
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47)
 
