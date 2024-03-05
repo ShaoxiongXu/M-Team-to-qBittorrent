@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
-// @version      4.1
+// @version      4.2
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -309,6 +309,12 @@
                 formData.append('urls', torrentUrl);
                 formData.append('savepath', savePath); // 下载文件夹 不传就保存到默认文件夹
                 formData.append('rename', rename); // 重命名种子
+
+                // 通过 savePath 获得 category
+                let saveLocations = GM_getValue("saveLocations", [{ label: "默认", value: "" }]);
+                const item = saveLocations.find(item => item.value === savePath);
+                if (item) formData.append('category', item.label); // 分类
+
                 formData.append('paused', !config.autoStartDownload); // 暂停? 默认 false
 
                 let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
