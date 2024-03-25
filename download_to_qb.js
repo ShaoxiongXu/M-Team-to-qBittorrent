@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
-// @description  在种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
-// @version      4.3
+// @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
+// @version      4.4
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
-// @match      https://unpkg.com/vue@3/dist/vue.global.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
 // @match        https://*/details.php*
 // @match        https://*/*/details.php*
@@ -32,8 +31,6 @@
 
 (function () {
     'use strict';
-
-    // unsafeWindow.Vue = Vue;
 
     let config = {}
 
@@ -1114,8 +1111,8 @@
 
         let box = isNexusPHP() ? document.querySelector("#outer img.dt_download").closest("td") : document.body;
 
-        let html = `&nbsp;<div id="script-div" class="script-div">
-            <button @click="togglePopup()">{{config.client}} 下载</button>
+        let html = `<div id="script-div" class="script-div">
+            &nbsp;<button @click="togglePopup()">{{config.client}} 下载</button>
             <div id='download-html' class='download-html'>
                 <div id="configPopup"  class="popup config-popup" style="z-index: 2;" v-show="isVisible">
                     <table>
@@ -1273,10 +1270,7 @@
         return meta && meta.getAttribute("content") === "NexusPHP";
     }
 
-    let executed = false; // 防止重复执行
     async function main() {
-        if (executed) return;
-        executed = true;
         try {
             if (getSite() || isNexusPHP()) {
                 setStyle();
@@ -1289,8 +1283,6 @@
             console.error("脚本初始化失败...", e)
         }
     }
-
-    let i = 0;
 
     function result() {
         let formData = new FormData();
@@ -1320,18 +1312,12 @@
     }
 
     async function mteamMain() { //  馒头网站现在有 bug 重复请求等.
-        if (i > 1) return;
-        for (let j = 0; j < 6; j++) {
-            await sleep(1000)
-            if (i === 2) {
-                main()
-                result().then(d => {
-                    torrentInfo.url = d;
-                })
-                return;
-            }
+        if(!document.querySelector("#script-div")) {
+            result().then(d => {
+                torrentInfo.url = d;
+            })
+            main();
         }
-        main();
     }
 
     if (asyncArr.includes(getSite())) {
@@ -1343,7 +1329,6 @@
                     if (this.readyState === 4 && this.status === 200) {
                         const res = JSON.parse(this.responseText);
                         if (res.message === "SUCCESS") {
-                            i++;
                             torrentInfo = res.data;
                             console.log("ID: ", res.data.id)
                             console.log("标题: ", res.data.name)
