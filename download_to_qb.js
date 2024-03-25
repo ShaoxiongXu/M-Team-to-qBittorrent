@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      4.4
+// @version      4.5
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -26,7 +26,6 @@
 // @license      GPL-2.0
 // @author       ShaoxiongXu
 // ==/UserScript==
-
 
 
 (function () {
@@ -1253,11 +1252,11 @@
         `;
 
 
-        if(isNexusPHP()) {
+        if (isNexusPHP()) {
             box.innerHTML += html;
         } else {
-            var el=document.createElement('div')
-            el.innerHTML=html;
+            var el = document.createElement('div')
+            el.innerHTML = html;
             box.append(el)
         }
     }
@@ -1312,7 +1311,7 @@
     }
 
     async function mteamMain() { //  馒头网站现在有 bug 重复请求等.
-        if(!document.querySelector("#script-div")) {
+        if (!document.querySelector("#script-div")) {
             result().then(d => {
                 torrentInfo.url = d;
             })
@@ -1329,7 +1328,10 @@
                     if (this.readyState === 4 && this.status === 200) {
                         const res = JSON.parse(this.responseText);
                         if (res.message === "SUCCESS") {
-                            torrentInfo = res.data;
+                            torrentInfo.id = res.data.id
+                            torrentInfo.name = res.data.name
+                            torrentInfo.originFileName = res.data.originFileName
+                            torrentInfo.smallDescr = res.data.smallDescr
                             console.log("ID: ", res.data.id)
                             console.log("标题: ", res.data.name)
                             console.log("种子名: ", res.data.originFileName)
