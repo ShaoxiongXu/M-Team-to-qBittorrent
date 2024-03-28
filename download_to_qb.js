@@ -2,14 +2,15 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      4.6
+// @version      4.7
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
 // @match        https://*/details.php*
 // @match        https://*/*/details.php*
 // @match        https://test2.m-team.cc/detail/*
-// @match        https://kp.m-team.cc/detail/*
+// @match        https://*.m-team.cc/detail/*
+// @match        https://*.m-team.io/detail/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_log
 // @grant        GM_setValue
@@ -372,7 +373,7 @@
                 formData.append('rename', rename); // 重命名种子
 
                 // 通过 savePath 获得 category
-                let saveLocations = GM_getValue("saveLocations", [{label: "默认", value: ""}]);
+                let saveLocations = GM_getValue("saveLocations", [{ label: "默认", value: "" }]);
                 const item = saveLocations.find(item => item.value === savePath);
                 if (item) formData.append('category', item.label); // 分类
 
@@ -494,7 +495,7 @@
 
         function getBasicInfo() {
             return new Promise(async (resolve, reject) => {
-                request({"method": "session-get"}, async function (response) { // 请求成功
+                request({ "method": "session-get" }, async function (response) { // 请求成功
                     console.log('Login Response:', response.responseText);
                     if (response.status === 404) {
                         reject("请检查 Transmission 访问地址是否正确");
@@ -664,7 +665,7 @@
         // 设置默认文件夹
         let saveLocations = GM_getValue("saveLocations");
         if (!saveLocations || saveLocations.length === 0 || (saveLocations.length === 1 && saveLocations[0].label === "默认" && !saveLocations[0].value)) {
-            GM_setValue("saveLocations", [{label: "默认", value: save_path}])
+            GM_setValue("saveLocations", [{ label: "默认", value: save_path }])
             console.log("设置默认保存位置为 ", save_path)
             resolve("保存配置成功，并设置了默认下载位置！");
             return;
@@ -768,7 +769,7 @@
                     address: GM_getValue("address", ""), //  Web UI 地址 http://127.0.0.1:8080
                     username: GM_getValue("username", ""), //  Web UI的用户名
                     password: GM_getValue("password", ""), //  Web UI的密码
-                    saveLocations: GM_getValue("saveLocations", [{label: "默认", value: ""}]), // 下载目录 默认 savePath 兼容老版本
+                    saveLocations: GM_getValue("saveLocations", [{ label: "默认", value: "" }]), // 下载目录 默认 savePath 兼容老版本
                     separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
                     autoStartDownload: GM_getValue("autoStartDownload", true),
                     autoCloseWindow: GM_getValue("autoCloseWindow", false), // 自动关闭窗口，只在窗口只有这个页面时生效
@@ -781,7 +782,7 @@
                 isDragging: false,
                 initialX: 0,
                 initialY: 0,
-                position: {x: 0, y: 0},
+                position: { x: 0, y: 0 },
             },
             methods: {
                 toggleConfigPopup() {
@@ -886,7 +887,7 @@
                     Client[config.client].download(inputValue, savePath, hash, torrentUrl, this.config.autoCloseWindow);
                 },
                 addLine() {
-                    this.config.saveLocations.push({label: "", value: ""})
+                    this.config.saveLocations.push({ label: "", value: "" })
                 },
                 saveLine() {
                     GM_setValue("saveLocations", this.config.saveLocations)
@@ -1100,7 +1101,7 @@
         if (!isNexusPHP()) {
             GM_addStyle(`.script-div {
                 position: fixed;
-                top: 50%;
+                top: 20%;
                 right: 0;
             }`)
         }
