@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      4.7
+// @version      4.8
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -371,6 +371,8 @@
                 formData.append('urls', torrentUrl);
                 formData.append('savepath', savePath); // 下载文件夹 不传就保存到默认文件夹
                 formData.append('rename', rename); // 重命名种子
+                formData.append('sequentialDownload', config.sequentialDownload); // 启用顺序下载。可能的值为true, false（默认）
+                formData.append('firstLastPiecePrio', config.firstLastPiecePrio); // 优先下载最后一块。可能的值为true, false（默认）
 
                 // 通过 savePath 获得 category
                 let saveLocations = GM_getValue("saveLocations", [{ label: "默认", value: "" }]);
@@ -754,13 +756,15 @@
         let unsupportedCharsRegex = /[\/:*?"<>|]/g;
 
         // 将不支持的字符替换为空格
-        return filename.replace(unsupportedCharsRegex, ' ');
+        filename = filename.replace(unsupportedCharsRegex, ' ');
+        // 替换连续多个空格为一个空格 (空格,制表符,换行,回车等)
+        return filename.replace(/\s+/g, ' ');
     }
 
     function init() {
         let torrentName = PT.getTorrentName();
         let app = new Vue({
-            el: '#script-div',
+            el: '#plugin-download-div',
             data: {
                 isVisible: false, //
                 isPopupVisible: false,
@@ -773,7 +777,9 @@
                     separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
                     autoStartDownload: GM_getValue("autoStartDownload", true),
                     autoCloseWindow: GM_getValue("autoCloseWindow", false), // 自动关闭窗口，只在窗口只有这个页面时生效
-                    client: GM_getValue("client", "qbittorrent")
+                    client: GM_getValue("client", "qbittorrent"),
+                    sequentialDownload: GM_getValue("sequentialDownload", false), // 启用顺序下载。可能的值为true, false（默认）
+                    firstLastPiecePrio: GM_getValue("firstLastPiecePrio", false) // 优先下载最后一块。可能的值为true, false（默认）
                 },
                 torrentName: torrentName,
                 title: PT.getTorrentTitle(),
@@ -820,13 +826,9 @@
                     })
 
                 },
-                autoStartDownloadCheckboxChange() {
-                    console.log('Checkbox state changed. New state:', this.config.autoStartDownload);
-                    GM_setValue("autoStartDownload", this.config.autoStartDownload);
-                },
-                autoCloseWindowCheckboxChange() {
+                configCheckboxChange(key) {
                     console.log('Checkbox state changed. New state:', this.config.autoCloseWindow);
-                    GM_setValue("autoCloseWindow", this.config.autoCloseWindow);
+                    GM_setValue(key, this.config[key]);
                 },
                 download(inputValue) {
 
@@ -957,10 +959,32 @@
 
     function setStyle() {
         GM_addStyle(`
-            .download-html {
+            #plugin-download-div * {
+                box-sizing: border-box;
+                font-size: 14px;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            #plugin-download-div button{
+                padding-block: 1px;
+                padding-inline: 6px;
+                background: revert;
+                border: revert;
+                line-height: 1.3em;
+                margin: 2px 0;
+            }
+            #plugin-download-div button:hover {
+                background: revert;
+            }
+            #plugin-download-div {
+                display: inline-block;
+                font-size: 14px;
+            }
+            #plugin-download-div .download-html {
                 position: absolute;
             }
-            .download-html table {
+            #plugin-download-div .download-html table {
                 border-right: medium none;
                 border-top: medium none;
                 border-left: medium none;
@@ -968,16 +992,21 @@
                 border-collapse: collapse;
                 background-color: #bccad6;
             }
-            #download-title {
-            text-align: center;
+            #plugin-download-div .download-html input[type="checkbox" i] {
+                margin: 2px 0;
+                height: 1.5em;
+                width: 100%;
             }
-            .download-html td{
+            #plugin-download-div #download-title {
+                text-align: center;
+            }
+            #plugin-download-div .download-html td{
                 border-right: #000000 1px solid;
                 border-top: #000000 1px solid;
                 border-left: #000000 1px solid;
                 border-bottom: #000000 1px solid;
             }
-            .download-html .popup {
+            #plugin-download-div .download-html .popup {
                 min-width: 550px;
                 height: auto;
                 min-height: 50px;
@@ -992,114 +1021,99 @@
                 transform: translate(-50%, -50%);
             }
 
-            .download-html .popup button {
-                margin: 5px;
-            }
-
-            .download-html .textinput {
+            #plugin-download-div .download-html input[type="text"],
+             #plugin-download-div .download-html input[type="password"] {
                 background-color: #e4e4e4;
                 border: 1px solid #587993;
+                font-size: 14px;
+                height: 20px;
+            }
+
+            #plugin-download-div .download-html .torrent-text > .textinput {
+                background-color: #e4e4e4;
                 border-radius: 4px;
-                height: 2.0em;
-                display: inline-block;
                 position: absolute;
                 top: 50%;
                 left: 0;
                 transform: translate(0, -50%);
                 font-size: 12px;
-                line-height: 12px;
-                margin: 0 6px 0 6px;
-                width: calc(100% - 12px);
-                box-sizing: border-box;
+                margin: 0 3px 0 3px;
+                width: calc(100% - 6px);
                 padding: 1em 2px;
             }
+            
 
-            .download-html .popup input:focus {
+
+            #plugin-download-div .download-html .popup input:focus {
                 /* 这条语句必须有，不然border效果不生效 */
                 outline: none;
                 border: 1px solid #587993;
             }
 
-            .download-html .popup table {
+            #plugin-download-div .download-html .popup table {
                 width: 100%;
             }
 
-            .download-html .popup tbody th {
+            #plugin-download-div .download-html .popup tbody th {
                 min-width: 5em;
                 width: 5em;
                 text-align: right;
                 padding: 0 0.5em 0 0;
             }
 
-            .download-html .popup .t-download {
+            #plugin-download-div .download-html .t-download-last-td {
                 min-width: 5em;
                 width: 5em;
+                text-align: center;
             }
 
-            .download-html .popup td,
-            .download-html .popup th {
+            #plugin-download-div .download-html .popup td,
+            #plugin-download-div .download-html .popup th {
                 vertical-align: middle;
             }
 
-            .download-html .popup .t-text {
+            #plugin-download-div .download-html .popup .t-text {
                 position: relative;
             }
 
-            .download-html .popup .t-text p {
+            #plugin-download-div .download-html .popup .torrent-text p {
                 visibility: hidden;
-                margin: 10px 18px;
+                margin: 12px 6px;
                 font-size: 12px;
-                line-height: 2em;
+                /* line-height: 1.6em; */
                 max-width: 600px;
                 white-space: nowrap;
                 overflow: hidden;
             }
-            .download-html th {
+            #plugin-download-div .download-html th {
                 text-align: center;
             }
-            .download-html button {
-                padding-block: 1px;
-                padding-inline: 6px;
-                background: revert;
-                border:revert;
-            }
-            .download-html button:hover {
-                background: revert;
-            }
-            .download-html .location-btn {
-                height: 18px;
-                font-size: 12px;
-                line-height: 12px;
-                margin: 0 !important;
-            }
 
-            .download-html .draggable {
+            #plugin-download-div .download-html .draggable {
                 // position: absolute;
                 // cursor: grab;
             }
-            #configPopup input {
+            #plugin-download-div #configPopup input[type=text],
+             #plugin-download-div #configPopup input[type=password] {
                 position: initial;
                 transform: none;
-                padding: 0;
+                padding: 12px 2px;
                 margin: 0;
                 width: 100%;
                 border: 0;
                 border-radius: 0;
             }
-            .script-div {
-                display: inline-block;
-                font-size: 14px;
-                box-sizing: border-box;
-            }
+            
 
-            .save-location-table td:last-child {
+            #plugin-download-div .save-location-table td:last-child {
                 width: 5em;
                 text-align: center;
             }
+            
         `)
 
         if (!isNexusPHP()) {
-            GM_addStyle(`.script-div {
+            GM_addStyle(`.plugin-download-div {
                 position: fixed;
                 top: 20%;
                 right: 0;
@@ -1111,7 +1125,7 @@
 
         let box = isNexusPHP() ? document.querySelector("#outer img.dt_download").closest("td") : document.body;
 
-        let html = `<div id="script-div" class="script-div">
+        let html = `<div id="plugin-download-div" class="plugin-download-div">
             &nbsp;<button @click="togglePopup()">{{config.client}} 下载</button>
             <div id='download-html' class='download-html'>
                 <div id="configPopup"  class="popup config-popup" style="z-index: 2;" v-show="isVisible">
@@ -1161,16 +1175,15 @@
                                     <table class="save-location-table">
                                         <tbody>
                                             <tr v-for="(item, index) in config.saveLocations" :key="index">
-                                                <td><input class="textinput" v-model="item.label" placeholder="标签"></td>
+                                                <td><input type="text" class="textinput" v-model="item.label" placeholder="标签"></td>
                                                 <td>
-                                                    <input class="textinput" v-model="item.value" placeholder="下载路径">
+                                                    <input type="text" class="textinput" v-model="item.value" placeholder="下载路径">
                                                 </td>
                                                 <td ><button class="location-btn" type="button" @click="delLine(index)">删除</button></td>
                                             </tr>
                                             <tr>
-                                                <th></th>
-                                                <td style="border: 0;"></td>
-                                                <td style="border: 0;"><button class="location-btn" type="button" @click="addLine()">添加</button></td>
+                                                <td colspan="2">&nbsp;</td>
+                                                <td><button class="location-btn" type="button" @click="addLine()">添加</button></td>
                                                 <!-- <button type="button" @click="saveLine($event)">保存</button> -->
                                             </tr>
                                         </tbody>
@@ -1180,18 +1193,31 @@
                             <tr>
                                 <th>自动开始:</th>
                                 <td class="t-text">
-                                    <input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="autoStartDownloadCheckboxChange">
+                                    <input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="configCheckboxChange">
+                                </td>
+                            </tr>
+                            <tr v-if="config.client === 'qbittorrent'">
+                                <th title="按顺序下载 torrent 片段">顺序下载:</th>
+                                <td class="t-text">
+                                    <input class="textinput" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload" @change="configCheckboxChange">
+                                </td>
+                            </tr>
+                            <tr v-if="config.client === 'qbittorrent'">
+                                <th title="默认禁用优先下载文件的首尾区块，优先下载首尾区块用于在文件未下载完成前可以预览，若启用本功能，将至少优先下载首区块和尾区块各1MB">首尾下载:</th>
+                                <td class="t-text">
+                                    <input class="textinput" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio" @change="configCheckboxChange">
                                 </td>
                             </tr>
                             <tr>
                                 <th title="打开状态时，如果新的窗口只有这一个页面，则在下载并重命名成功后会自动关闭该窗口。">智能关窗:</th>
                                 <td class="t-text">
-                                    <input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="autoCloseWindowCheckboxChange">
+                                    <input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="configCheckboxChange">
                                 </td>
                             </tr>
+                            
                             <tr>
                                 <th></th>
-                                <td class="t-text"><button type="button" id="configSave" @click="configSave($event)">保存</button><button  type="button" @click="toggleConfigPopup()">关闭</button></td>
+                                <td class="t-text"><div style="display: flex;flex-direction: row;justify-content: flex-end;padding-right: 6px;"><button type="button" id="configSave" @click="configSave($event)">保存</button><button style="margin-left: 6px" type="button" @click="toggleConfigPopup()">关闭</button></div></td>
                             </tr>
                         </tbody>
                     </table>
@@ -1207,7 +1233,7 @@
                         <tbody>
                             <tr>
                                 <th>下载位置:</th>
-                                <td class="t-text" colspan="2" style="padding: 10px 6px;">
+                                <td class="t-text" colspan="2" style="padding: 8px 4px;">
                                     <div style="flex-wrap: wrap;">
                                         <label :title="item.value" style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;" v-for="(item, index) in config.saveLocations" :key="index">
                                             <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="selectedLabel" :value="index">
@@ -1218,33 +1244,47 @@
                             </tr>
                             <tr>
                                 <th>种子名:</th>
-                                <td class="t-text">
-                                    <input :title="torrentName" class="textinput" v-model="torrentName">
+                                <td class="t-text torrent-text">
+                                    <input type="text" :title="torrentName" class="textinput" v-model="torrentName">
                                     <p>{{torrentName}}</p>
                                 </td>
-                                <td class="t-download"><button @click="download(torrentName)">下载</button></td>
+                                <td class="t-download-last-td"><button @click="download(torrentName)">下载</button></td>
                             </tr>
                             <tr>
                                 <th>主标题:</th>
-                                <td class="t-text">
-                                    <input :title="title" class="textinput" v-model="title">
+                                <td class="t-text torrent-text">
+                                    <input type="text" :title="title" class="textinput" v-model="title">
                                     <p>{{title}}</p>
                                 </td>
-                                <td class="t-download"><button @click="download(title)">下载</button></td>
+                                <td class="t-download-last-td"><button @click="download(title)">下载</button></td>
                             </tr>
                             <tr>
                                 <th>副标题:</th>
-                                <td class="t-text">
-                                    <input :title="subTitle" class="textinput" v-model="subTitle">
+                                <td class="t-text torrent-text">
+                                    <input type="text" :title="subTitle" class="textinput" v-model="subTitle">
                                     <p>{{subTitle}}</p>
                                 </td>
-                                <td class="t-download"><button @click="download(subTitle)">下载</button></td>
+                                <td class="t-download-last-td"><button @click="download(subTitle)">下载</button></td>
+                            </tr>
+                            <tr v-if="config.client === 'qbittorrent'">
+                                <th title="按顺序下载 torrent 片段">顺序下载:</th>
+                                <td class="t-text">
+                                    <input class="textinput checkbox" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload">
+                                </td>
+                                <td rowspan="2"></td>
+                            </tr>
+                            <tr v-if="config.client === 'qbittorrent'">
+                                <th title="默认禁用优先下载文件的首尾区块，优先下载首尾区块用于在文件未下载完成前可以预览，若启用本功能，将至少优先下载首区块和尾区块各1MB">首尾下载:</th>
+                                <td class="t-text">
+                                    <input class="textinput checkbox" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio">
+                                </td>
                             </tr>
                             <tr>
                                 <th>自动开始:</th>
-                                <td class="t-text"><input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></td>
-                                <td class="t-download"><button @click="togglePopup()">关闭</button></td>
+                                <td class="t-text"><input STYLE="" class="textinput checkbox" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></td>
+                                <td class="t-download-last-td"><button @click="togglePopup()">关闭</button></td>
                             </tr>
+                            
                         </tbody>
                     </table>
                 </div>

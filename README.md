@@ -4,7 +4,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 【PT助手|PT下载|team|mteam|馒头|NexusPHP】在种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent 或 Transmission，支持文件重命名并指定下载位置，兼容 NexusPHP 站点。
 
-![image](https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47)
+![image](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/ee602b67-1939-45fc-8a74-b4ab31f12083)
 
 - 支持下载到 qBittorrent 和 Transmission
 
@@ -19,6 +19,10 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 - 自动取代 Windows/Linux 不支持字符为空格
 
 - 文件名长度检测
+
+- 顺序下载：按顺序下载 torrent 片段
+
+- 首尾下载：默认禁用优先下载文件的首尾区块，优先下载首尾区块用于在文件未下载完成前可以预览，若启用本功能，将至少优先下载首区块和尾区块各1MB
 
 - 理论支持所有 NexusPHP 架构站点
 
@@ -62,7 +66,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 ![image](https://github.com/ShaoxiongXu/script/assets/127823819/bc33dc63-6c9c-4086-8c53-3cdfb722c74b)
 
-![image](https://github.com/ShaoxiongXu/script/assets/127823819/54eab69f-415f-4ad3-9b01-98f18c6fbe47)
+![image](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/ee602b67-1939-45fc-8a74-b4ab31f12083)
 
 ![image](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/e675eb78-d244-4d3a-b135-f0c9cc47290d)
 
