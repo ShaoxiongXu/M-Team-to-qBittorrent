@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      4.8
+// @version      4.9
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -46,7 +46,16 @@
         "m-team": "new_mteam",
         // "m-team": "mteam",
         "www.ptlsp.com": "ptlsp",
-        "www.tjupt.org": "tjupt"
+        "www.tjupt.org": "tjupt",
+        "springsunday": "springsunday",
+        "hhanclub": "hhanclub",
+        "hdsky": "hdsky",
+        "hdhome.org": "hdhome",
+        "audiences.me": "audiences",
+        "keepfrds.com": "keepfrds",
+        "zmpt.cc": "zmpt",
+        "hdarea.club": "hdarea",
+        "totheglory": "totheglory"
     }
 
     // 异步加载种子信息的网站, 如新版馒头
@@ -88,10 +97,68 @@
         tjupt: {
             getTorrentUrl: () => document.querySelector(`#direct_link`).getAttribute(`href`)
         },
+        springsunday: {
+            getTorrentTitle: () => document.querySelector(`#torrent-name`).innerText
+        },
+        hhanclub: {
+            getTorrentTitle: () => {
+                return document.evaluate("//div[text()='标题']", document).iterateNext()?.nextElementSibling.innerText.trim()
+            },
+            getTorrentName: () => {
+                let str = document.querySelector("a.index").innerText;
+                console.log("原始种子名:", str);
+                return /\.(.+)\./.exec(str)[1];
+            },
+            getTorrentSubTitle: () => document.evaluate("//div[text()='副标题']", document).iterateNext()?.nextElementSibling.innerText
+        },
+        hdsky: {
+            getTorrentName: () => {
+                let str = document.evaluate("//td[text()='下载']", document).iterateNext()?.nextElementSibling.querySelector("input").value
+                console.log("原始种子名:", str);
+                return /\.(.+)\./.exec(str)[1];
+            }
+        },
+        hdhome: {
+            getTorrentUrl: () => {
+                const linkElement = document.querySelector('td.rowfollow a[href*="/download.php?id="]');
+                return linkElement ? linkElement.getAttribute("href") : null;
+            }
+        },
+        audiences: {
+            getTorrentUrl: () => {
+                const linkElement = document.getElementById('torrent_dl_url').querySelector('a');
+                return linkElement ? linkElement.getAttribute('href') : null;
+            }
+        },
+        zmpt: {
+            getTorrentUrl: () => document.getElementById('content').textContent.trim()
+        },
+        keepfrds: {
+            getTorrentUrl: () => document.getElementById('download_link').value
+        },
+        hdarea: {
+            getTorrentTitle: () => {
+                const titleElement = document.querySelector("h1#top");
+                let titleText = titleElement.textContent.trim(); // 获取标题文本并去除首尾空白
+                titleText = titleText.replace(/(<.*?>|\[.*?\])/g, ''); // 使用正则表达式替换 HTML 标签和括号内容
+                return titleText ? titleText : null;
+            },
+            getTorrentUrl: () => {
+                const regex = /https?:\/\/\S+download\.php\?id=\d+&passkey=\w+/;
+                const match = document.body.textContent.match(regex);
+                return match ? match[0] : null;
+            }
+        },
+        totheglory: {
+            getTorrentName: () => document.querySelector("td.rowhead").nextElementSibling.querySelector("a").textContent.match(/.+\s(.+)\./)[1],
+            getTorrentTitle: () => document.querySelector("h1").textContent,
+            getTorrentSubTitle: () => "",
+            getTorrentUrl: () => document.querySelector("td[valign='top'] a").getAttribute("href"),
+        },
         // 默认策略
         defaultStrategy: {
             getTorrentUrl: () => {
-                let allLinks = document.querySelectorAll('#outer a');
+                let allLinks = document.querySelectorAll('body a');
                 // 查找第一个下载链接 link.href 会自动将相对路径转换为绝对路径，提供完整的 URL。
                 let firstMatchingLink = Array.from(allLinks).find(function (link) {
                     return /download.php\?id=[0-9]+&passkey=.+$/.test(link.href)
@@ -100,8 +167,9 @@
                 return firstMatchingLink ? firstMatchingLink.href : "";
             },
             getTorrentHash: () => {
-                let text = document.getElementById("outer").innerText;
-                let match = text.match(/hash.?:\s([a-fA-F0-9]{40})/i);
+                let text = document.querySelector("body").innerText;
+                // let match = text.match(/hash.?:\s([a-fA-F0-9]{40})/i);
+                let match = text.match(/([a-fA-F0-9]{40})/);
                 return match ? match[1] : "";
             },
             getTorrentTitle: () => {
@@ -172,11 +240,15 @@
         let login = () => {
             return new Promise((resolve, reject) => {
                 GM_xmlhttpRequest({
-                    method: 'POST', url: `${config.address}/api/v2/auth/login`, data: getQueryString({
+                    method: 'POST',
+                    url: `${config.address}/api/v2/auth/login`,
+                    data: getQueryString({
                         'username': config.username, 'password': config.password
-                    }), headers: {
+                    }),
+                    headers: {
                         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                    }, onload: function (response) { // 请求成功
+                    },
+                    onload: function (response) { // 请求成功
                         if (response.status === 404) {
                             reject("请检查 qBittorrent 访问地址是否正确");
                             return;
@@ -188,7 +260,8 @@
 
                         console.log('Login Response:', response.responseText);
                         resolve("请求成功！")
-                    }, onerror: function (error) { // 请求失败
+                    },
+                    onerror: function (error) { // 请求失败
                         console.error('请求发生错误:', error);
                         reject("qBittorrent 无响应！");
                     }
@@ -237,18 +310,18 @@
                 } else {
                     GM_xmlhttpRequest({
                         method: 'GET',
-                        url: `${config.address}/api/v2/sync/maindata`,
+                        url: `${config.address}/api/v2/torrents/info`,
+                        data: getQueryString({"limit": 5, "sort": "added_on", "reverse": "true"}),
                         onload: function (response) {
 
-                            let data = JSON.parse(response.responseText).torrents;
+                            let dataArr = JSON.parse(response.responseText);
 
-                            const hashes = Object.keys(data);
+                            if (!dataArr) {
+                                reject("获取种子信息失败,种子列表未找到种子.");
+                                return;
+                            }
 
-                            console.log("种子列表长度:", hashes)
-
-                            for (let h of hashes) {
-
-                                let info = data[h];
+                            dataArr.forEach((info) => {
                                 if (info.name === newTorrentName) {
 
                                     console.log('TorrentInfo:', info);
@@ -271,15 +344,14 @@
                                     console.log(`新文件名: ${newTorrentName}`);
 
                                     return resolve({
-                                        "hash": h,
+                                        "hash": info.hash,
                                         "oldFileName": oldFileName,
                                         "torrentName": newTorrentName,
                                         "message": "获取种子信息成功."
                                     })
                                 }
-
-                            }
-                            console.log(data)
+                            })
+                            console.log(dataArr)
                             reject("获取种子信息失败,种子列表未找到种子.")
                         },
                         onerror: function (error) {
@@ -316,8 +388,9 @@
                             reject("获取种子信息失败！")
                         }
                     });
+                } else {
+                    resolve("没有 Hash 值不判断是否存在...")
                 }
-                resolve("没有 Hash 值不判断是否存在...")
             })
         }
 
@@ -341,14 +414,19 @@
                 const endpoint = isFolder(oldPath) ? '/api/v2/torrents/renameFolder' : '/api/v2/torrents/renameFile';
 
                 GM_xmlhttpRequest({
-                    method: 'POST', url: `${config.address}${endpoint}`, data: getQueryString({
-                        'hash': hash, 'oldPath': oldPath, 'newPath': newPath
-                    }), headers: {
+                    method: 'POST',
+                    url: `${config.address}${endpoint}`,
+                    headers: {
                         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                    }, onload: function (response) {
+                    },
+                    data: getQueryString({
+                        'hash': hash, 'oldPath': oldPath, 'newPath': newPath
+                    }),
+                    onload: function (response) {
                         console.log('重命名成功.');
                         resolve("重命名成功.")
-                    }, onerror: function (error) {
+                    },
+                    onerror: function (error) {
                         // 请求失败
                         console.error('重命名请求失败: ', error);
                         reject('重命名失败！');
@@ -373,9 +451,10 @@
                 formData.append('rename', rename); // 重命名种子
                 formData.append('sequentialDownload', config.sequentialDownload); // 启用顺序下载。可能的值为true, false（默认）
                 formData.append('firstLastPiecePrio', config.firstLastPiecePrio); // 优先下载最后一块。可能的值为true, false（默认）
+                formData.append('autoTMM', config.autoTMM); // 优先下载最后一块。可能的值为true, false（默认）
 
                 // 通过 savePath 获得 category
-                let saveLocations = GM_getValue("saveLocations", [{ label: "默认", value: "" }]);
+                let saveLocations = GM_getValue("saveLocations", [{label: "默认", value: ""}]);
                 const item = saveLocations.find(item => item.value === savePath);
                 if (item) formData.append('category', item.label); // 分类
 
@@ -385,8 +464,11 @@
 
                 GM_xmlhttpRequest({
                     method: 'POST',
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    },
                     url: `${config.address}/api/v2/torrents/add`,
-                    data: formData,
+                    data: getQueryString(formData),
                     onload: async function (response) {
                         const responseData = response.responseText;
                         if (responseData !== "Ok.") {
@@ -497,7 +579,7 @@
 
         function getBasicInfo() {
             return new Promise(async (resolve, reject) => {
-                request({ "method": "session-get" }, async function (response) { // 请求成功
+                request({"method": "session-get"}, async function (response) { // 请求成功
                     console.log('Login Response:', response.responseText);
                     if (response.status === 404) {
                         reject("请检查 Transmission 访问地址是否正确");
@@ -667,7 +749,7 @@
         // 设置默认文件夹
         let saveLocations = GM_getValue("saveLocations");
         if (!saveLocations || saveLocations.length === 0 || (saveLocations.length === 1 && saveLocations[0].label === "默认" && !saveLocations[0].value)) {
-            GM_setValue("saveLocations", [{ label: "默认", value: save_path }])
+            GM_setValue("saveLocations", [{label: "默认", value: save_path}])
             console.log("设置默认保存位置为 ", save_path)
             resolve("保存配置成功，并设置了默认下载位置！");
             return;
@@ -685,6 +767,9 @@
     }
 
     function getQueryString(params) {
+        if (params instanceof FormData) {
+            return new URLSearchParams(params).toString();
+        }
         return Object.keys(params)
             .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
             .join('&');
@@ -773,13 +858,14 @@
                     address: GM_getValue("address", ""), //  Web UI 地址 http://127.0.0.1:8080
                     username: GM_getValue("username", ""), //  Web UI的用户名
                     password: GM_getValue("password", ""), //  Web UI的密码
-                    saveLocations: GM_getValue("saveLocations", [{ label: "默认", value: "" }]), // 下载目录 默认 savePath 兼容老版本
+                    saveLocations: GM_getValue("saveLocations", [{label: "默认", value: ""}]), // 下载目录 默认 savePath 兼容老版本
                     separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
                     autoStartDownload: GM_getValue("autoStartDownload", true),
                     autoCloseWindow: GM_getValue("autoCloseWindow", false), // 自动关闭窗口，只在窗口只有这个页面时生效
                     client: GM_getValue("client", "qbittorrent"),
                     sequentialDownload: GM_getValue("sequentialDownload", false), // 启用顺序下载。可能的值为true, false（默认）
-                    firstLastPiecePrio: GM_getValue("firstLastPiecePrio", false) // 优先下载最后一块。可能的值为true, false（默认）
+                    firstLastPiecePrio: GM_getValue("firstLastPiecePrio", false), // 优先下载最后一块。可能的值为true, false（默认）
+                    autoTMM: GM_getValue("autoTMM", false) // 是否应使用自动种子管理
                 },
                 torrentName: torrentName,
                 title: PT.getTorrentTitle(),
@@ -788,7 +874,7 @@
                 isDragging: false,
                 initialX: 0,
                 initialY: 0,
-                position: { x: 0, y: 0 },
+                position: {x: 0, y: 0},
             },
             methods: {
                 toggleConfigPopup() {
@@ -889,7 +975,7 @@
                     Client[config.client].download(inputValue, savePath, hash, torrentUrl, this.config.autoCloseWindow);
                 },
                 addLine() {
-                    this.config.saveLocations.push({ label: "", value: "" })
+                    this.config.saveLocations.push({label: "", value: ""})
                 },
                 saveLine() {
                     GM_setValue("saveLocations", this.config.saveLocations)
@@ -957,7 +1043,7 @@
         });
     }
 
-    function setStyle() {
+    function setStyle(pinButton) {
         GM_addStyle(`
             #plugin-download-div * {
                 box-sizing: border-box;
@@ -965,6 +1051,8 @@
                 margin: 0;
                 padding: 0;
                 box-sizing: border-box;
+                color: revert;
+                font-weight: revert;
             }
             #plugin-download-div button{
                 padding-block: 1px;
@@ -973,6 +1061,12 @@
                 border: revert;
                 line-height: 1.3em;
                 margin: 2px 0;
+                border-radius: revert;
+                color: revert;
+            }
+            #plugin-download-div table td,
+             #plugin-download-div table th{
+                background: initial;
             }
             #plugin-download-div button:hover {
                 background: revert;
@@ -993,9 +1087,15 @@
                 background-color: #bccad6;
             }
             #plugin-download-div .download-html input[type="checkbox" i] {
-                margin: 2px 0;
-                height: 1.5em;
-                width: 100%;
+                    margin: 2px 0;
+                    height: 1.5em;
+                    width: 1.5em;
+                    margin-left: 50%;
+                    transform: translateX(-50%);
+            }
+            #plugin-download-div .download-html .exclusive-label {
+                    display: inline-block;
+                    width: 100%;
             }
             #plugin-download-div #download-title {
                 text-align: center;
@@ -1103,16 +1203,18 @@
                 border: 0;
                 border-radius: 0;
             }
-            
 
             #plugin-download-div .save-location-table td:last-child {
                 width: 5em;
                 text-align: center;
             }
+            #plugin-download-div .save-location-table td:first-child {
+                width: 6em;
+            }
             
         `)
 
-        if (!isNexusPHP()) {
+        if (pinButton) {
             GM_addStyle(`.plugin-download-div {
                 position: fixed;
                 top: 20%;
@@ -1121,9 +1223,9 @@
         }
     }
 
-    function setHtml() {
+    function setHtml(pinButton) {
 
-        let box = isNexusPHP() ? document.querySelector("#outer img.dt_download").closest("td") : document.body;
+        let box = pinButton ? document.body : document.querySelector("#outer img.dt_download")?.closest("td");
 
         let html = `<div id="plugin-download-div" class="plugin-download-div">
             &nbsp;<button @click="togglePopup()">{{config.client}} 下载</button>
@@ -1141,12 +1243,10 @@
                                 <td class="t-text">
                                     <div style="flex-wrap: wrap;">
                                         <label style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;">
-                                            <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="config.client" value="qbittorrent">
-                                            qBittorrent
+                                            <input style="vertical-align: middle;margin: 2px;" type="radio" v-model="config.client" value="qbittorrent">qBittorrent
                                         </label>
                                         <label style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;">
-                                            <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="config.client" value="transmission">
-                                            Transmission
+                                            <input style="vertical-align: middle;margin: 2px;" type="radio" v-model="config.client" value="transmission">Transmission
                                         </label>
                                     </div>
                                 </td>
@@ -1175,8 +1275,8 @@
                                     <table class="save-location-table">
                                         <tbody>
                                             <tr v-for="(item, index) in config.saveLocations" :key="index">
-                                                <td><input type="text" class="textinput" v-model="item.label" placeholder="标签"></td>
-                                                <td>
+                                                <td style="background: #e4e4e4;"><input type="text" class="textinput" v-model="item.label" placeholder="标签"></td>
+                                                <td style="background: #e4e4e4;">
                                                     <input type="text" class="textinput" v-model="item.value" placeholder="下载路径">
                                                 </td>
                                                 <td ><button class="location-btn" type="button" @click="delLine(index)">删除</button></td>
@@ -1193,25 +1293,31 @@
                             <tr>
                                 <th>自动开始:</th>
                                 <td class="t-text">
-                                    <input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="configCheckboxChange">
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="configCheckboxChange"></label>
                                 </td>
                             </tr>
                             <tr v-if="config.client === 'qbittorrent'">
                                 <th title="按顺序下载 torrent 片段">顺序下载:</th>
                                 <td class="t-text">
-                                    <input class="textinput" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload" @change="configCheckboxChange">
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload" @change="configCheckboxChange"></label>
                                 </td>
                             </tr>
                             <tr v-if="config.client === 'qbittorrent'">
                                 <th title="默认禁用优先下载文件的首尾区块，优先下载首尾区块用于在文件未下载完成前可以预览，若启用本功能，将至少优先下载首区块和尾区块各1MB">首尾下载:</th>
                                 <td class="t-text">
-                                    <input class="textinput" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio" @change="configCheckboxChange">
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio" @change="configCheckboxChange"></label>
+                                </td>
+                            </tr>
+                            <tr v-if="config.client === 'qbittorrent'">
+                                <th title="自动 Torrent 管理">自动管理:</th>
+                                <td class="t-text">
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoTMM" v-model="config.autoTMM" @change="configCheckboxChange"></label>
                                 </td>
                             </tr>
                             <tr>
                                 <th title="打开状态时，如果新的窗口只有这一个页面，则在下载并重命名成功后会自动关闭该窗口。">智能关窗:</th>
                                 <td class="t-text">
-                                    <input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="configCheckboxChange">
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="configCheckboxChange"></label>
                                 </td>
                             </tr>
                             
@@ -1236,7 +1342,7 @@
                                 <td class="t-text" colspan="2" style="padding: 8px 4px;">
                                     <div style="flex-wrap: wrap;">
                                         <label :title="item.value" style="vertical-align: middle;white-space: nowrap;display: inline-flex;padding: 3px;" v-for="(item, index) in config.saveLocations" :key="index">
-                                            <input style="vertical-align: middle;margin: 0px 2px 0px 2px;" type="radio" v-model="selectedLabel" :value="index">
+                                            <input style="vertical-align: middle;margin: 2px;" type="radio" v-model="selectedLabel" :value="index">
                                             {{ item.label }}
                                         </label>
                                     </div>
@@ -1269,19 +1375,19 @@
                             <tr v-if="config.client === 'qbittorrent'">
                                 <th title="按顺序下载 torrent 片段">顺序下载:</th>
                                 <td class="t-text">
-                                    <input class="textinput checkbox" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload">
+                                    <label class="exclusive-label"><input class="textinput checkbox" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload"></label>
                                 </td>
                                 <td rowspan="2"></td>
                             </tr>
                             <tr v-if="config.client === 'qbittorrent'">
                                 <th title="默认禁用优先下载文件的首尾区块，优先下载首尾区块用于在文件未下载完成前可以预览，若启用本功能，将至少优先下载首区块和尾区块各1MB">首尾下载:</th>
                                 <td class="t-text">
-                                    <input class="textinput checkbox" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio">
+                                    <label class="exclusive-label"><input class="textinput checkbox" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio"></label>
                                 </td>
                             </tr>
                             <tr>
                                 <th>自动开始:</th>
-                                <td class="t-text"><input STYLE="" class="textinput checkbox" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></td>
+                                <td class="t-text"><label class="exclusive-label"><input class="textinput checkbox" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></label></td>
                                 <td class="t-download-last-td"><button @click="togglePopup()">关闭</button></td>
                             </tr>
                             
@@ -1293,12 +1399,12 @@
         `;
 
 
-        if (isNexusPHP()) {
-            box.innerHTML += html;
-        } else {
-            var el = document.createElement('div')
+        if (pinButton) {
+            var el = document.createElement('div');
             el.innerHTML = html;
-            box.append(el)
+            box.append(el);
+        } else {
+            box.innerHTML += html;
         }
     }
 
@@ -1313,8 +1419,10 @@
     async function main() {
         try {
             if (getSite() || isNexusPHP()) {
-                setStyle();
-                setHtml();
+                // 固定按钮
+                let pinButton = document.querySelector("#outer img.dt_download")?.closest("td") === undefined;
+                setStyle(pinButton);
+                setHtml(pinButton);
                 init();
             } else {
                 console.log("非 NexusPHP 站点，或未经过特殊配置站点，暂不支持！")
@@ -1325,13 +1433,16 @@
     }
 
     function result() {
-        let formData = new FormData();
-        formData.append('id', torrentInfo.id);
-        return new Promise(async (resolve, reject) => {
+        return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
                 method: 'POST',
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                },
                 url: `https://${window.location.host}/api/torrent/genDlToken`,
-                data: formData,
+                data: getQueryString({
+                    "id": torrentInfo.id
+                }),
                 onload: function (response) {
                     const res = response.responseText;
                     let data = JSON.parse(res);
@@ -1357,6 +1468,7 @@
         })
         main();
     }
+
     let executed = false;
     if (asyncArr.includes(getSite())) {
         const originOpen = XMLHttpRequest.prototype.open;

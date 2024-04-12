@@ -32,9 +32,9 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 - Transmission 版本要求 ≥ 3.0
 
+- IOS Safari 浏览器使用 Stay 安装插件时, 需要在 Web UI 取消启用跨站请求伪造 (CSRF) 保护
+
 - 更多站点我也没号,**有 HDChina 或其他PT站 邀可以拉小弟一把**.本人TG:[@zhendi6](https://t.me/zhendi6)
-  
-- 贡献者 [@fqdeng](https://t.me/fqdeng) 也欢迎大佬 给邀
 
 ## 使用教程 
 
