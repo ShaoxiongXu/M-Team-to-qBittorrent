@@ -11,6 +11,7 @@
 // @match        https://test2.m-team.cc/detail/*
 // @match        https://*.m-team.cc/detail/*
 // @match        https://*.m-team.io/detail/*
+// @match        https://totheglory.im/t/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_log
 // @grant        GM_setValue
@@ -98,7 +99,8 @@
             getTorrentUrl: () => document.querySelector(`#direct_link`).getAttribute(`href`)
         },
         springsunday: {
-            getTorrentTitle: () => document.querySelector(`#torrent-name`).innerText
+            getTorrentTitle: () => document.querySelector(`#torrent-name`).innerText,
+            getDownloadButtonMountPoint: () => document.querySelector('a[title="下载种子"]').closest('td')
         },
         hhanclub: {
             getTorrentTitle: () => {
@@ -116,7 +118,8 @@
                 let str = document.evaluate("//td[text()='下载']", document).iterateNext()?.nextElementSibling.querySelector("input").value
                 console.log("原始种子名:", str);
                 return /\.(.+)\./.exec(str)[1];
-            }
+            },
+            getDownloadButtonMountPoint: () => document.querySelector("#outer .dt_download")?.closest("td")
         },
         hdhome: {
             getTorrentUrl: () => {
@@ -154,6 +157,8 @@
             getTorrentTitle: () => document.querySelector("h1").textContent,
             getTorrentSubTitle: () => "",
             getTorrentUrl: () => document.querySelector("td[valign='top'] a").getAttribute("href"),
+            getDownloadButtonMountPoint: () => document.querySelector('a[href^="https://totheglory.im/dl/"]').closest('td')
+
         },
         // 默认策略
         defaultStrategy: {
@@ -185,7 +190,8 @@
                     || document.evaluate("//td[text()='副标题']", document).iterateNext()
                     || document.evaluate("//td[text()='Small Description']", document).iterateNext()
                 return subTitleTd.nextElementSibling.innerText;
-            }
+            },
+            getDownloadButtonMountPoint: () => document.querySelector("#outer img.dt_download")?.closest("td")
         }
     };
 
@@ -233,6 +239,9 @@
             let v = replaceUnsupportedCharacters(execMethodName("getTorrentSubTitle")).trim();
             console.log("副标题: ", v);
             return v;
+        },
+        getDownloadButtonMountPoint: () => {
+            return execMethodName("getDownloadButtonMountPoint")
         }
     }
 
@@ -767,12 +776,7 @@
     }
 
     function getQueryString(params) {
-        if (params instanceof FormData) {
-            return new URLSearchParams(params).toString();
-        }
-        return Object.keys(params)
-            .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(params[key]))
-            .join('&');
+        return new URLSearchParams(params).toString();
     }
 
     // 种子以这些文件结尾时,单文件储存,非目录
@@ -825,7 +829,6 @@
                     }
                 })
             }
-
             attempt()
         })
     }
@@ -1141,8 +1144,6 @@
                 width: calc(100% - 6px);
                 padding: 1em 2px;
             }
-            
-
 
             #plugin-download-div .download-html .popup input:focus {
                 /* 这条语句必须有，不然border效果不生效 */
@@ -1224,8 +1225,6 @@
     }
 
     function setHtml(pinButton) {
-
-        let box = pinButton ? document.body : document.querySelector("#outer img.dt_download")?.closest("td");
 
         let html = `<div id="plugin-download-div" class="plugin-download-div">
             &nbsp;<button @click="togglePopup()">{{config.client}} 下载</button>
@@ -1399,12 +1398,21 @@
         `;
 
 
-        if (pinButton) {
-            var el = document.createElement('div');
+        let downloadButtonMountPoint = PT.getDownloadButtonMountPoint();
+        if(downloadButtonMountPoint) {
+            let el = document.createElement('div');
             el.innerHTML = html;
-            box.append(el);
+            el.style.display = "inline"
+            downloadButtonMountPoint.append(el);
         } else {
-            box.innerHTML += html;
+            GM_addStyle(`.plugin-download-div {
+                position: fixed;
+                top: 20%;
+                right: 0;
+            }`)
+            let el = document.createElement('div')
+            el.innerHTML = html;
+            document.body.append(el)
         }
     }
 
@@ -1419,10 +1427,8 @@
     async function main() {
         try {
             if (getSite() || isNexusPHP()) {
-                // 固定按钮
-                let pinButton = document.querySelector("#outer img.dt_download")?.closest("td") === undefined;
-                setStyle(pinButton);
-                setHtml(pinButton);
+                setStyle();
+                setHtml();
                 init();
             } else {
                 console.log("非 NexusPHP 站点，或未经过特殊配置站点，暂不支持！")
