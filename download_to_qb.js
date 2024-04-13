@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      4.9
+// @version      5.0
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -425,10 +425,10 @@
 
                 GM_xmlhttpRequest({
                     method: 'POST',
-                    url: `${config.address}${endpoint}`,
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
                     },
+                    url: `${config.address}${endpoint}`,
                     data: getQueryString({
                         'hash': hash, 'oldPath': oldPath, 'newPath': newPath
                     }),
@@ -830,6 +830,7 @@
                     }
                 })
             }
+
             attempt()
         })
     }
@@ -1403,7 +1404,7 @@
 
 
         let downloadButtonMountPoint = PT.getDownloadButtonMountPoint();
-        if(downloadButtonMountPoint) {
+        if (downloadButtonMountPoint) {
             let el = document.createElement('div');
             el.innerHTML = html;
             el.style.display = "inline"
@@ -1444,30 +1445,29 @@
 
     function result() {
         return new Promise((resolve, reject) => {
-            GM_xmlhttpRequest({
-                method: 'POST',
+            fetch(`https://${window.location.host}/api/torrent/genDlToken`, {
+                method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
                 },
-                url: `https://${window.location.host}/api/torrent/genDlToken`,
-                data: getQueryString({
-                    "id": torrentInfo.id
-                }),
-                onload: function (response) {
-                    const res = response.responseText;
-                    let data = JSON.parse(res);
-                    if (data.code !== "0") {
-                        downloadMsg();
-                        reject(`获取种子下载地址失败: ${res}`);
-                    } else {
-                        resolve(data.data);
-                    }
-                },
-                onerror: function (error) {
-                    cocoMessage.error("获取种子下载地址失败，请刷新重试！", 10000, true);
-                    console.error('获取种子下载地址失败，请刷新重试', error);
-                    reject("获取种子下载地址失败: 请求发生错误...");
+                body: getQueryString({
+                    id: torrentInfo.id
+                })
+            }).then(response => {
+                if (!response.ok) {
+                    console.error(`获取种子下载地址失败: ${data.message}`);
+                    return reject(`获取种子下载地址失败: ${data.message}`);
                 }
+                return response.json();
+            }).then(data => {
+                if (data.code !== "0") {
+                    console.error(`获取种子下载地址失败: ${data.message}`);
+                    return reject(`获取种子下载地址失败: ${data.message}`);
+                }
+                resolve(data.data);
+            }).catch(error => {
+                console.error('获取种子下载地址失败:', error);
+                reject("获取种子下载地址失败: 请求发生错误...");
             });
         });
     }
@@ -1475,6 +1475,8 @@
     async function mteamMain() { //  馒头网站现在有 bug 重复请求等.
         await result().then(d => {
             torrentInfo.url = d;
+        }).catch(() => {
+            cocoMessage.error("获取种子下载地址失败，请刷新重试！", 10000, true);
         })
         main();
     }
