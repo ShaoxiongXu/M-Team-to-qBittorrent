@@ -26,15 +26,15 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 - 理论支持所有 NexusPHP 架构站点
 
-- 目前仅测试北洋园、M-Team(馒头)、ptlsp 站点
+- 目前仅测试北洋园、M-Team(馒头)、ptlsp、HDTime 站点
 
 - qBittorrent 版本要求 ≥ v4.1
 
 - Transmission 版本要求 ≥ 3.0
 
-- IOS Safari 浏览器使用 Stay 安装插件时, 需要在 Web UI 取消启用跨站请求伪造 (CSRF) 保护
+- IOS Safari 浏览器使用 Stay 安装插件时, 需要在**设置** => **Safari浏览器** => **取消勾选防止跨站跟踪**, 并在 Web UI **取消启用跨站请求伪造 (CSRF) 保护**
 
-- 更多站点我也没号,**有 HDChina 或其他PT站 邀可以拉小弟一把**.本人TG:[@zhendi6](https://t.me/zhendi6)
+- 如有问题可联系TG:[@zhendi6](https://t.me/zhendi6)
 
 ## 使用教程 
 
@@ -80,7 +80,6 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
     ```javascript
     label: {
         getTorrentUrl() // 获取种子地址，能复制到 qb 下载的 必须
-        getTorrentHash() // 获取种子 Hash 必须
         getTorrentTitle() // 获取标题 必须
         getTorrentName() // 获取种子文件名 必须
         getTorrentSubTitle() // 获取副标题 可选
