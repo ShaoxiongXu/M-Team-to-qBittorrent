@@ -201,7 +201,7 @@
             let strategy = getSite() && siteStrategies[getSite()] || siteStrategies.defaultStrategy;
             let execMethodName = strategy[methodName] || siteStrategies.defaultStrategy[methodName];
             let flag = getSite() && siteStrategies[getSite()] && siteStrategies[getSite()][methodName] ? getSite() : "defaultStrategy"
-            console.log(`"执行: ${flag}.${methodName}(${execMethodName})"`)
+            console.log(`执行: ${flag}.${methodName}(${execMethodName})`)
             return execMethodName() ?? "";
         } catch (e) {
             console.error(`执行 ${methodName}() 失败！`, e)
@@ -1048,7 +1048,7 @@
         });
     }
 
-    function setStyle(pinButton) {
+    function setStyle() {
         GM_addStyle(`
             #plugin-download-div * {
                 box-sizing: border-box;
@@ -1219,17 +1219,9 @@
             }
             
         `)
-
-        if (pinButton) {
-            GM_addStyle(`.plugin-download-div {
-                position: fixed;
-                top: 20%;
-                right: 0;
-            }`)
-        }
     }
 
-    function setHtml(pinButton) {
+    function setHtml() {
 
         let html = `<div id="plugin-download-div" class="plugin-download-div">
             &nbsp;<button @click="togglePopup()">{{config.client}} 下载</button>
