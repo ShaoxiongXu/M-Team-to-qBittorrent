@@ -85,7 +85,8 @@
             getTorrentHash: () => "",
             getTorrentTitle: () => torrentInfo.name,
             getTorrentName: () => torrentInfo.originFileName,
-            getTorrentSubTitle: () => torrentInfo.smallDescr
+            getTorrentSubTitle: () => torrentInfo.smallDescr,
+            getDownloadButtonMountPoint: () => document.querySelector('button.ant-btn.ant-btn-link.ant-btn-sm.ant-dropdown-trigger')?.closest("td")
         },
         mteam: {
             getTorrentUrl: () => {
@@ -1056,6 +1057,9 @@
                 box-sizing: border-box;
                 color: revert;
                 font-weight: revert;
+            }
+            #plugin-download-div table {
+                table-layout: auto;
             }
             #plugin-download-div button{
                 padding-block: 1px;
