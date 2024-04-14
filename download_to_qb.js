@@ -870,7 +870,8 @@
                     client: GM_getValue("client", "qbittorrent"),
                     sequentialDownload: GM_getValue("sequentialDownload", false), // 启用顺序下载。可能的值为true, false（默认）
                     firstLastPiecePrio: GM_getValue("firstLastPiecePrio", false), // 优先下载最后一块。可能的值为true, false（默认）
-                    autoTMM: GM_getValue("autoTMM", false) // 是否应使用自动种子管理
+                    autoTMM: GM_getValue("autoTMM", false), // 是否应使用自动种子管理
+                    pinButton: GM_getValue("pinButton", false) // 下载按钮固定到右侧
                 },
                 torrentName: torrentName,
                 title: PT.getTorrentTitle(),
@@ -916,10 +917,6 @@
                         cocoMessage.error(e, 10000, true);
                     })
 
-                },
-                configCheckboxChange(key) {
-                    console.log('Checkbox state changed. New state:', this.config.autoCloseWindow);
-                    GM_setValue(key, this.config[key]);
                 },
                 download(inputValue) {
 
@@ -1289,31 +1286,37 @@
                             <tr>
                                 <th>自动开始:</th>
                                 <td class="t-text">
-                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload" @change="configCheckboxChange"></label>
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoStartDownload" v-model="config.autoStartDownload"></label>
                                 </td>
                             </tr>
                             <tr v-if="config.client === 'qbittorrent'">
                                 <th title="按顺序下载 torrent 片段">顺序下载:</th>
                                 <td class="t-text">
-                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload" @change="configCheckboxChange"></label>
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.sequentialDownload" v-model="config.sequentialDownload"></label>
                                 </td>
                             </tr>
                             <tr v-if="config.client === 'qbittorrent'">
                                 <th title="默认禁用优先下载文件的首尾区块，优先下载首尾区块用于在文件未下载完成前可以预览，若启用本功能，将至少优先下载首区块和尾区块各1MB">首尾下载:</th>
                                 <td class="t-text">
-                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio" @change="configCheckboxChange"></label>
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.firstLastPiecePrio" v-model="config.firstLastPiecePrio"></label>
                                 </td>
                             </tr>
                             <tr v-if="config.client === 'qbittorrent'">
                                 <th title="自动 Torrent 管理">自动管理:</th>
                                 <td class="t-text">
-                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoTMM" v-model="config.autoTMM" @change="configCheckboxChange"></label>
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoTMM" v-model="config.autoTMM"></label>
+                                </td>
+                            </tr>
+                            <tr v-if="config.client === 'qbittorrent'">
+                                <th title="下载按钮浮动在页面右上角">右浮按钮:</th>
+                                <td class="t-text">
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.pinButton" v-model="config.pinButton"></label>
                                 </td>
                             </tr>
                             <tr>
                                 <th title="打开状态时，如果新的窗口只有这一个页面，则在下载并重命名成功后会自动关闭该窗口。">智能关窗:</th>
                                 <td class="t-text">
-                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow" @change="configCheckboxChange"></label>
+                                    <label class="exclusive-label"><input class="textinput" type="checkbox" :checked="config.autoCloseWindow" v-model="config.autoCloseWindow"></label>
                                 </td>
                             </tr>
                             
@@ -1396,7 +1399,7 @@
 
 
         let downloadButtonMountPoint = PT.getDownloadButtonMountPoint();
-        if (downloadButtonMountPoint) {
+        if (GM_getValue("pinButton", false) === false && downloadButtonMountPoint) {
             let el = document.createElement('div');
             el.innerHTML = html;
             el.style.display = "inline"
