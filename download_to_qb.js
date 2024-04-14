@@ -320,8 +320,7 @@
                 } else {
                     GM_xmlhttpRequest({
                         method: 'GET',
-                        url: `${config.address}/api/v2/torrents/info`,
-                        data: getQueryString({"limit": 5, "sort": "added_on", "reverse": "true"}),
+                        url: `${config.address}/api/v2/torrents/info?${getQueryString({"limit": 5, "sort": "added_on", "reverse": "true"})}`,
                         onload: function (response) {
 
                             let dataArr = JSON.parse(response.responseText);
