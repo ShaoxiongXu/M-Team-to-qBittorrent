@@ -98,4 +98,28 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 ## 贡献者
 
 <!-- readme: contributors -start -->
+<table>
+<tr>
+    <td align="center">
+        <a href="https://github.com/ShaoxiongXu">
+            <img src="https://avatars.githubusercontent.com/u/127823819?v=4" width="100;" alt="ShaoxiongXu"/>
+            <br />
+            <sub><b>ShaoxiongXu</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/dadinet">
+            <img src="https://avatars.githubusercontent.com/u/131777059?v=4" width="100;" alt="dadinet"/>
+            <br />
+            <sub><b>dadinet</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/dengfengqi1">
+            <img src="https://avatars.githubusercontent.com/u/139300420?v=4" width="100;" alt="dengfengqi1"/>
+            <br />
+            <sub><b>dengfengqi1</b></sub>
+        </a>
+    </td></tr>
+</table>
 <!-- readme: contributors -end -->
