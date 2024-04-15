@@ -112,7 +112,8 @@
                 console.log("原始种子名:", str);
                 return /\.(.+)\./.exec(str)[1];
             },
-            getTorrentSubTitle: () => document.evaluate("//div[text()='副标题']", document).iterateNext()?.nextElementSibling.innerText
+            getTorrentSubTitle: () => document.evaluate("//div[text()='副标题']", document).iterateNext()?.nextElementSibling.innerText,
+			getDownloadButtonMountPoint: () => document.querySelector(".flex.gap-x-5")
         },
         hdsky: {
             getTorrentName: () => {
