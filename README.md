@@ -95,3 +95,7 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
         "www.label.com": "label" // 示例
     }
     ```
+## 贡献者
+
+<!-- readme: contributors -start -->
+<!-- readme: contributors -end -->
