@@ -155,7 +155,7 @@
             }
         },
         totheglory: {
-            getTorrentName: () => document.querySelector("td.rowhead").nextElementSibling.querySelector("a").textContent.match(/.+\s(.+)\./)[1],
+            getTorrentName: () => document.querySelector("td.rowhead").nextElementSibling.querySelector("a").textContent.replace("[TTG]", ""),
             getTorrentTitle: () => document.querySelector("h1").textContent,
             getTorrentSubTitle: () => "",
             getTorrentUrl: () => document.querySelector("td[valign='top'] a").getAttribute("href"),
