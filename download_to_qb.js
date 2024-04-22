@@ -1120,10 +1120,12 @@
                 border-radius: 4px;
                 padding: 10px;
                 position: fixed;
-                top: 40vh;
+                top: 50%;
                 left: 50%;
                 /* 在水平和垂直方向上都将元素向左和向上平移了它自身宽度和高度的一半。 */
                 transform: translate(-50%, -50%);
+                max-height: calc(100% - 20px);
+                overflow-x: auto;
             }
 
             #plugin-download-div .download-html input[type="text"],
