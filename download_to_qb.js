@@ -56,7 +56,8 @@
         "keepfrds.com": "keepfrds",
         "zmpt.cc": "zmpt",
         "hdarea.club": "hdarea",
-        "totheglory": "totheglory"
+        "totheglory": "totheglory",
+        "hddolby.com": "hddolby"
     }
 
     // 异步加载种子信息的网站, 如新版馒头
@@ -161,6 +162,13 @@
             getTorrentUrl: () => document.querySelector("td[valign='top'] a").getAttribute("href"),
             getDownloadButtonMountPoint: () => document.querySelector('a[href^="https://totheglory.im/dl/"]').closest('td')
 
+        },
+        hddolby: {
+            getTorrentUrl: () => {
+                const currentDomain = window.location.origin;
+                const relativeUrl = [...document.querySelectorAll('a.faqlink')].find(element => element.textContent.includes('右键复制种子链接')).getAttribute('href');
+                return currentDomain + '/' + relativeUrl;
+            }
         },
         // 默认策略
         defaultStrategy: {
