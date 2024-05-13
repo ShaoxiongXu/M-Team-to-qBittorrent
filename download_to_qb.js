@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      5.0
+// @version      5.2
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -1128,10 +1128,12 @@
                 border-radius: 4px;
                 padding: 10px;
                 position: fixed;
-                top: 40vh;
+                top: 50%;
                 left: 50%;
                 /* 在水平和垂直方向上都将元素向左和向上平移了它自身宽度和高度的一半。 */
                 transform: translate(-50%, -50%);
+                max-height: calc(100% - 20px);
+                overflow-x: auto;
             }
 
             #plugin-download-div .download-html input[type="text"],
@@ -1451,7 +1453,9 @@
             fetch(`https://${window.location.host}/api/torrent/genDlToken`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    "TS": Math.floor(Date.now() / 1000),
+                    "Authorization": localStorage.getItem("auth") || ""
                 },
                 body: getQueryString({
                     id: torrentInfo.id
