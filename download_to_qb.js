@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      5.2
+// @version      5.3
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -1450,7 +1450,7 @@
 
     function result() {
         return new Promise((resolve, reject) => {
-            fetch(`https://${window.location.host}/api/torrent/genDlToken`, {
+            fetch(`https://api.${window.location.hostname.split('.').slice(-2).join(".")}/api/torrent/genDlToken`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
