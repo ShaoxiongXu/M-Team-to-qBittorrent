@@ -1450,7 +1450,7 @@
 
     function result() {
         return new Promise((resolve, reject) => {
-            fetch(`https://api.${window.location.hostname.split('.').slice(-2).join(".")}/api/torrent/genDlToken`, {
+            fetch(`${localStorage.getItem("apiHost")}/torrent/genDlToken`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
