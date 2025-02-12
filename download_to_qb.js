@@ -462,50 +462,64 @@
          */
         function addTorrent(rename, savePath, torrentUrl) {
             return new Promise(function (resolve, reject) {
-
-                let formData = new FormData();
-                formData.append('urls', torrentUrl);
-                formData.append('savepath', savePath); // 下载文件夹 不传就保存到默认文件夹
-                formData.append('rename', rename); // 重命名种子
-                formData.append('sequentialDownload', config.sequentialDownload); // 启用顺序下载。可能的值为true, false（默认）
-                formData.append('firstLastPiecePrio', config.firstLastPiecePrio); // 优先下载最后一块。可能的值为true, false（默认）
-                formData.append('autoTMM', config.autoTMM); // 优先下载最后一块。可能的值为true, false（默认）
-
-                // 通过 savePath 获得 category
-                let saveLocations = GM_getValue("saveLocations", [{label: "默认", value: ""}]);
-                const item = saveLocations.find(item => item.value === savePath);
-                if (item) formData.append('category', item.label); // 分类
-
-                formData.append('paused', !config.autoStartDownload); // 暂停? 默认 false
-
-                let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
-
-                GM_xmlhttpRequest({
-                    method: 'POST',
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-                    },
-                    url: `${config.address}/api/v2/torrents/add`,
-                    data: getQueryString(formData),
-                    onload: async function (response) {
-                        const responseData = response.responseText;
-                        if (responseData !== "Ok.") {
-                            downloadMsg();
-                            reject(`添加种子失败: ${responseData}`);
-                        } else {
-                            await sleep(1000)
-                            downloadMsg();
-                            resolve("添加种子成功.");
+                // 先从种子链接下载种子文件内容
+                fetch(torrentUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`下载种子失败，状态码：${response.status}`);
                         }
-                    },
-                    onerror: function (error) {
-                        downloadMsg();
-                        console.error('添加种子失败: 请求发生错误:', error);
-                        reject("添加种子失败: 请求发生错误...");
-                    }
-                });
+                        return response.arrayBuffer();
+                    })
+                    .then(binaryData => {
+                        let formData = new FormData();
+                        // 设置mime
+                        let bl = new Blob([binaryData], {type:"application/x-bittorrent"})
+                        // 将下载的种子文件内容添加到表单
+                        formData.append('torrents', bl);
+        
+                        // 设置其他参数
+                        formData.append('savepath', savePath); // 下载文件夹 不传就保存到默认文件夹
+                        formData.append('rename', rename); // 重命名种子
+                        formData.append('sequentialDownload', config.sequentialDownload); // 启用顺序下载。可能的值为true, false（默认）
+                        formData.append('firstLastPiecePrio', config.firstLastPiecePrio); // 优先下载最后一块。可能的值为true, false（默认）
+                        formData.append('autoTMM', config.autoTMM); // 优先下载最后一块。可能的值为true, false（默认）
 
-            })
+                        // 通过 savePath 获得 category
+                        let saveLocations = GM_getValue("saveLocations", [{label: "默认", value: ""}]);
+                        const item = saveLocations.find(item => item.value === savePath);
+                        if (item) formData.append('category', item.label); // 分类
+        
+                        formData.append('paused', !config.autoStartDownload); // 暂停? 默认 false
+        
+                        let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
+        
+                        GM_xmlhttpRequest({
+                            method: 'POST',
+                            url: `${config.address}/api/v2/torrents/add`,
+                            data: formData,
+                            onload: function(response) {
+                                const responseData = response.responseText;
+                                if (responseData !== "Ok.") {
+                                    downloadMsg();
+                                    reject(`添加种子失败: ${responseData}`);
+                                } else {
+                                    sleep(1000);
+                                    downloadMsg();
+                                    resolve("添加种子成功.");
+                                }
+                            },
+                            onerror: function(error) {
+                                downloadMsg();
+                                console.error('添加种子失败: 请求发生错误:', error);
+                                reject("添加种子失败: 请求发生错误...");
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        reject(`下载种子时出错：${error.message}`);
+                    });
+        
+            });
         }
 
         return { // qBittorrent
