@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      5.3
+// @version      5.4
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -13,6 +13,7 @@
 // @match        https://*.m-team.io/detail/*
 // @match        https://totheglory.im/t/*
 // @grant        GM_xmlhttpRequest
+// @connect      *
 // @grant        GM_log
 // @grant        GM_setValue
 // @grant        GM_getValue
@@ -114,7 +115,7 @@
                 return /\.(.+)\./.exec(str)[1];
             },
             getTorrentSubTitle: () => document.evaluate("//div[text()='副标题']", document).iterateNext()?.nextElementSibling.innerText,
-			getDownloadButtonMountPoint: () => document.querySelector(".flex.gap-x-5")
+            getDownloadButtonMountPoint: () => document.querySelector(".flex.gap-x-5")
         },
         hdsky: {
             getTorrentName: () => {
@@ -254,6 +255,18 @@
             return execMethodName("getDownloadButtonMountPoint")
         }
     }
+
+    // 封装 GM_xmlhttpRequest 为 Promise
+    function GM_fetch(options) {
+        return new Promise((resolve, reject) => {
+            GM_xmlhttpRequest({
+                ...options,
+                onload: (response) => resolve(response),
+                onerror: (error) => reject(error),
+            });
+        });
+    }
+
 
     let qbittorrent = (function () {
         let login = () => {
@@ -461,65 +474,68 @@
          * @returns
          */
         function addTorrent(rename, savePath, torrentUrl) {
-            return new Promise(function (resolve, reject) {
-                // 先从种子链接下载种子文件内容
-                fetch(torrentUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`下载种子失败，状态码：${response.status}`);
-                        }
-                        return response.arrayBuffer();
-                    })
-                    .then(binaryData => {
-                        let formData = new FormData();
-                        // 设置mime
-                        let bl = new Blob([binaryData], {type:"application/x-bittorrent"})
-                        // 将下载的种子文件内容添加到表单
-                        formData.append('torrents', bl);
-        
-                        // 设置其他参数
-                        formData.append('savepath', savePath); // 下载文件夹 不传就保存到默认文件夹
-                        formData.append('rename', rename); // 重命名种子
-                        formData.append('sequentialDownload', config.sequentialDownload); // 启用顺序下载。可能的值为true, false（默认）
-                        formData.append('firstLastPiecePrio', config.firstLastPiecePrio); // 优先下载最后一块。可能的值为true, false（默认）
-                        formData.append('autoTMM', config.autoTMM); // 优先下载最后一块。可能的值为true, false（默认）
+            return new Promise((resolve, reject) => {
+                let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
+                GM_fetch({ // 下载种子文件
+                    method: "GET",
+                    url: torrentUrl,
+                    responseType: "arraybuffer",
+                }).then((response) => {
+                    if (response.status !== 200) {
+                        console.log("下载种子失败",response);
+                        throw new Error(`下载种子失败，状态码：${response.status}`);
+                    }
+                    return response.response; // arraybuffer
+                }).then(binaryData => {
 
-                        // 通过 savePath 获得 category
-                        let saveLocations = GM_getValue("saveLocations", [{label: "默认", value: ""}]);
-                        const item = saveLocations.find(item => item.value === savePath);
-                        if (item) formData.append('category', item.label); // 分类
-        
-                        formData.append('paused', !config.autoStartDownload); // 暂停? 默认 false
-        
-                        let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
-        
-                        GM_xmlhttpRequest({
-                            method: 'POST',
-                            url: `${config.address}/api/v2/torrents/add`,
-                            data: formData,
-                            onload: function(response) {
-                                const responseData = response.responseText;
-                                if (responseData !== "Ok.") {
-                                    downloadMsg();
-                                    reject(`添加种子失败: ${responseData}`);
-                                } else {
-                                    sleep(1000);
-                                    downloadMsg();
-                                    resolve("添加种子成功.");
-                                }
-                            },
-                            onerror: function(error) {
+                    let formData = new FormData();
+                    // 设置mime
+                    let bl = new Blob([binaryData], {type: "application/x-bittorrent"})
+                    // 将下载的种子文件内容添加到表单
+                    formData.append('torrents', bl);
+
+                    // 设置其他参数
+                    formData.append('savepath', savePath); // 下载文件夹 不传就保存到默认文件夹
+                    formData.append('rename', rename); // 重命名种子
+                    formData.append('sequentialDownload', config.sequentialDownload); // 启用顺序下载。可能的值为true, false（默认）
+                    formData.append('firstLastPiecePrio', config.firstLastPiecePrio); // 优先下载最后一块。可能的值为true, false（默认）
+                    formData.append('autoTMM', config.autoTMM); // 优先下载最后一块。可能的值为true, false（默认）
+
+                    // 通过 savePath 获得 category
+                    let saveLocations = GM_getValue("saveLocations", [{label: "默认", value: ""}]);
+                    const item = saveLocations.find(item => item.value === savePath);
+                    if (item) formData.append('category', item.label); // 分类
+
+                    formData.append('paused', !config.autoStartDownload); // 暂停? 默认 false
+
+                    // let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
+
+                    GM_xmlhttpRequest({
+                        method: 'POST',
+                        url: `${config.address}/api/v2/torrents/add`,
+                        data: formData,
+                        onload: function (response) {
+                            const responseData = response.responseText;
+                            if (responseData !== "Ok.") {
                                 downloadMsg();
-                                console.error('添加种子失败: 请求发生错误:', error);
-                                reject("添加种子失败: 请求发生错误...");
+                                reject(`添加种子失败: ${responseData}`);
+                            } else {
+                                sleep(1000);
+                                downloadMsg();
+                                resolve("添加种子成功.");
                             }
-                        });
-                    })
-                    .catch(error => {
-                        reject(`下载种子时出错：${error.message}`);
+                        },
+                        onerror: function (error) {
+                            downloadMsg();
+                            console.error('添加种子失败: 请求发生错误:', error);
+                            reject("添加种子失败: 请求发生错误...");
+                        }
                     });
-        
-            });
+                }).catch(error => {
+                    console.error(error);
+                    reject(`下载种子时出错：${error.message}`);
+                });
+            })
         }
 
         return { // qBittorrent
@@ -647,36 +663,64 @@
             })
         }
 
+        function arrayBufferToBase64(buffer) {
+            return new Promise((resolve, reject) => {
+                const blob = new Blob([buffer], { type: "application/x-bittorrent" });
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
         function addTorrent(rename, savePath, torrentUrl) {
             return new Promise((resolve, reject) => {
-                request({
-                    "arguments": {
-                        "download-dir": savePath,
-                        "filename": torrentUrl,
-                        "paused": !config.autoStartDownload
-                    },
-                    "method": "torrent-add"
-                }, function (response) {
-                    const responseData = response.responseText;
+                GM_fetch({ // 下载种子文件
+                    method: "GET",
+                    url: torrentUrl,
+                    responseType: "arraybuffer",
+                }).then((response) => {
                     if (response.status !== 200) {
-                        return reject(`添加种子失败: ${responseData}`);
+                        console.log("下载种子失败",response);
+                        throw new Error(`下载种子失败，状态码：${response.status}`);
                     }
+                    return response.response; // arraybuffer
+                }).then(binaryData => {
+                    return arrayBufferToBase64(binaryData);
+                }).then(base64Torrent => {
+                    request({
+                        "arguments": {
+                            "download-dir": savePath,
+                            // "filename": torrentUrl,
+                            "metainfo": base64Torrent, // base64 编码的 .torrent 内容
+                            "paused": !config.autoStartDownload
+                        },
+                        "method": "torrent-add"
+                    }, function (response) {
+                        const responseData = response.responseText;
+                        if (response.status !== 200) {
+                            return reject(`添加种子失败: ${responseData}`);
+                        }
 
-                    let data = JSON.parse(response.responseText);
-                    console.log("torrent-add: ", data)
-                    if (data.result !== "success") {
-                        return reject(`添加种子失败：${data.result}`);
-                    }
-                    let duplicate = data.arguments["torrent-duplicate"];
-                    let torrent = duplicate ? data.arguments["torrent-duplicate"] : data.arguments["torrent-added"];
-                    resolve({
-                        message: "添加种子成功.",
-                        id: torrent.id,
-                        hash: torrent.hashString,
-                        name: torrent.name,
-                        duplicate: duplicate
-                    });
-                })
+                        let data = JSON.parse(response.responseText);
+                        console.log("torrent-add: ", data)
+                        if (data.result !== "success") {
+                            return reject(`添加种子失败：${data.result}`);
+                        }
+                        let duplicate = data.arguments["torrent-duplicate"];
+                        let torrent = duplicate ? data.arguments["torrent-duplicate"] : data.arguments["torrent-added"];
+                        resolve({
+                            message: "添加种子成功.",
+                            id: torrent.id,
+                            hash: torrent.hashString,
+                            name: torrent.name,
+                            duplicate: duplicate
+                        });
+                    })
+                }).catch(error => {
+                    console.error(error);
+                    reject(`下载种子时出错：${error.message}`);
+                });
             })
         }
 
@@ -865,7 +909,7 @@
      */
     function replaceUnsupportedCharacters(filename) {
         // 使用正则表达式匹配Linux和Windows不支持的字符
-        let unsupportedCharsRegex = /[\/:*?"<>|]/g;
+        let unsupportedCharsRegex = /[\/\\:*?"<>|]/g;
 
         // 将不支持的字符替换为空格
         filename = filename.replace(unsupportedCharsRegex, ' ');
