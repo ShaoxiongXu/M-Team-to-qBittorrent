@@ -120,6 +120,13 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
             <br />
             <sub><b>dengfengqi1</b></sub>
         </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/ywwzwb">
+            <img src="https://avatars.githubusercontent.com/u/13915067?v=4" width="100;" alt="ywwzwb"/>
+            <br />
+            <sub><b>ywwzwb</b></sub>
+        </a>
     </td></tr>
 </table>
 <!-- readme: contributors -end -->
