@@ -40,8 +40,9 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 
 ### 安装
 
-脚本安装:[https://greasyfork.org/zh-CN/scripts/470727](https://greasyfork.org/zh-CN/scripts/470727-%E7%A7%8D%E5%AD%90%E4%B8%8B%E8%BD%BD%E5%B7%A5%E5%85%B7)
+**由于最新 Chrome 浏览器禁止 Manifest V2 扩展规范，使用脚本需要在浏览器扩展页面打开开发者模式！**
 
+脚本安装:[https://greasyfork.org/zh-CN/scripts/470727](https://greasyfork.org/zh-CN/scripts/470727-%E7%A7%8D%E5%AD%90%E4%B8%8B%E8%BD%BD%E5%B7%A5%E5%85%B7)
 
 
 ### Windows 客户端需要打开 WebUI
