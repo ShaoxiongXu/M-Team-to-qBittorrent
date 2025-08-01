@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         馒头种子列表页图片预览
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  鼠标悬停到图片上时自动放大，预览！
 // @author       ShaoxiongXu
 // @match        https://*.m-team.cc/*
@@ -35,7 +35,8 @@
         if (removeIcon) parent.removeChild(removeIcon)
         let imgPreview = document.querySelector("#img-preview")
         parent.addEventListener('mouseover', function (e) {
-            let flagElement = this.parentElement;
+            let flagElement = this; // 新版
+            if (this.parentElement.tagName === "TD") flagElement = this.parentElement; // 老版
             let img = this.querySelector("img");
             let src = img.src
             if (src) {
