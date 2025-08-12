@@ -72,30 +72,75 @@ GitHub项目地址: [https://github.com/ShaoxiongXu/M-Team-to-qBittorrent](https
 ![image](https://github.com/ShaoxiongXu/M-Team-to-qBittorrent/assets/127823819/e675eb78-d244-4d3a-b135-f0c9cc47290d)
 
 
-## 新站点支持
+## 新增站点支持 - 完整示例
 
-欢迎提交 PR
+想让脚本支持更多站点？只需要改两个地方。
 
-新增站点需: 
-1. 在 `siteStrategies` 对象中新增一个策略，实现以下方法
-    ```javascript
-    label: {
-        getTorrentUrl() // 获取种子地址，能复制到 qb 下载的 必须
-        getTorrentTitle() // 获取标题 必须
-        getTorrentName() // 获取种子文件名 必须
-        getTorrentSubTitle() // 获取副标题 可选
+假设我们要给网站 `www.newpt.com` 加支持，站点代号取名 `newpt`。
+
+### **1. 在 `siteStrategies` 里加策略**
+
+```javascript
+let siteStrategies = {
+    // 已有的策略...
+    
+    newpt: { // 这是站点代号，和后面映射的要一致
+        getTorrentUrl() {
+            // 找到种子下载按钮的链接
+            // 这里的选择器和属性值要根据站点实际 HTML 调整
+            return document.querySelector('.download-link').href;
+        },
+        getTorrentTitle() {
+            // 获取种子标题
+            return document.querySelector('h1.torrent-title').innerText.trim();
+        },
+        getTorrentName() {
+            // 获取种子文件名
+            return document.querySelector('.filename').innerText.trim();
+        },
+        getTorrentSubTitle() {
+            // （可选）获取副标题，没有可以 return 空
+            let el = document.querySelector('.subtitle');
+            return el ? el.innerText.trim() : '';
+        }
     }
-    ```
-2. 在 `sites` 对象中增加映射网站关系, 例子
-    ```
-    // 网站路径包含  host : label  要增加网站改这里
-    let sites = {
-        "m-team": "mteam",
-        "ptlsp": "ptlsp",
-        "www.tjupt.org": "tjupt",
-        "www.label.com": "label" // 示例
-    }
-    ```
+};
+```
+
+------
+
+### **2. 在 `sites` 里加映射关系**
+
+```javascript
+let sites = {
+    "m-team": "mteam",
+    "ptlsp": "ptlsp",
+    "www.tjupt.org": "tjupt",
+    "www.newpt.com": "newpt" // 新加的站点映射
+};
+```
+
+------
+
+### **3. 提交 PR 前自测**
+
+1. 打开 `www.newpt.com` 的种子详情页
+
+2. 在浏览器控制台手动调用：
+
+   ```javascript
+   siteStrategies.newpt.getTorrentUrl()
+   siteStrategies.newpt.getTorrentTitle()
+   siteStrategies.newpt.getTorrentName()
+   siteStrategies.newpt.getTorrentSubTitle()
+   ```
+
+   确认能返回正确的值
+
+3. 确保 `newpt` 这个代号在两处都一致
+
+4. 代码缩进和现有项目保持统一
+
 ## 贡献者
 
 <!-- readme: contributors -start -->
