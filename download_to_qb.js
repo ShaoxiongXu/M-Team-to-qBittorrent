@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      5.6
+// @version      5.7
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -89,7 +89,7 @@
             getTorrentName: () => torrentInfo.originFileName,
             getTorrentSubTitle: () => torrentInfo.smallDescr,
             getDownloadButtonMountPoint: () => {
-                if(document.querySelector(".mt-4.app-content__inner")) {
+                if (document.querySelector(".mt-4.app-content__inner")) {
                     return document.querySelector('button.ant-btn.ant-btn-link.ant-btn-sm.ant-dropdown-trigger')?.closest("td")
                 }
                 return document.querySelector(".mt-4>div");
@@ -347,7 +347,11 @@
                 } else {
                     GM_xmlhttpRequest({
                         method: 'GET',
-                        url: `${config.address}/api/v2/torrents/info?${getQueryString({"limit": 5, "sort": "added_on", "reverse": "true"})}`,
+                        url: `${config.address}/api/v2/torrents/info?${getQueryString({
+                            "limit": 5,
+                            "sort": "added_on",
+                            "reverse": "true"
+                        })}`,
                         onload: function (response) {
 
                             let dataArr = JSON.parse(response.responseText);
@@ -487,7 +491,7 @@
                     responseType: "arraybuffer",
                 }).then((response) => {
                     if (response.status !== 200) {
-                        console.log("下载种子失败",response);
+                        console.log("下载种子失败", response);
                         throw new Error(`下载种子失败，状态码：${response.status}`);
                     }
                     return response.response; // arraybuffer
@@ -495,7 +499,7 @@
 
                     let formData = new FormData();
                     // 设置mime
-                    let bl = new Blob([binaryData], {type: "application/x-bittorrent"})
+                    let bl = new Blob([binaryData], { type: "application/x-bittorrent" })
                     // 将下载的种子文件内容添加到表单
                     formData.append('torrents', bl);
 
@@ -507,7 +511,7 @@
                     formData.append('autoTMM', config.autoTMM); // 优先下载最后一块。可能的值为true, false（默认）
 
                     // 通过 savePath 获得 category
-                    let saveLocations = GM_getValue("saveLocations", [{label: "默认", value: ""}]);
+                    let saveLocations = GM_getValue("saveLocations", [{ label: "默认", value: "" }]);
                     const item = saveLocations.find(item => item.value === savePath);
                     if (item) formData.append('category', item.label); // 分类
 
@@ -632,7 +636,7 @@
 
         function getBasicInfo() {
             return new Promise(async (resolve, reject) => {
-                request({"method": "session-get"}, async function (response) { // 请求成功
+                request({ "method": "session-get" }, async function (response) { // 请求成功
                     console.log('Login Response:', response.responseText);
                     if (response.status === 404) {
                         reject("请检查 Transmission 访问地址是否正确");
@@ -642,7 +646,7 @@
                         sessionId = response.responseHeaders.match(/X-Transmission-Session-Id:\s*(\S+)/i)[1];
                         GM_setValue("sessionId", sessionId);
                         // 加 await 更直观
-                        await getBasicInfo(true).then(resolve).catch(reject);
+                        await getBasicInfo().then(resolve).catch(reject);
                         return;
                     }
                     if (response.status !== 200) {
@@ -686,7 +690,7 @@
                     responseType: "arraybuffer",
                 }).then((response) => {
                     if (response.status !== 200) {
-                        console.log("下载种子失败",response);
+                        console.log("下载种子失败", response);
                         throw new Error(`下载种子失败，状态码：${response.status}`);
                     }
                     return response.response; // arraybuffer
@@ -746,7 +750,7 @@
                     let data = JSON.parse(response.responseText);
                     console.log("torrent-rename-path: ", data)
                     if (data.result !== "success") {
-                        reject(`重命名文件失败: ${data.result}`);
+                        return reject(`重命名文件失败: ${data.result}`);
                     }
                     resolve({
                         message: "添加种子成功.",
@@ -830,7 +834,7 @@
         // 设置默认文件夹
         let saveLocations = GM_getValue("saveLocations");
         if (!saveLocations || saveLocations.length === 0 || (saveLocations.length === 1 && saveLocations[0].label === "默认" && !saveLocations[0].value)) {
-            GM_setValue("saveLocations", [{label: "默认", value: save_path}])
+            GM_setValue("saveLocations", [{ label: "默认", value: save_path }])
             console.log("设置默认保存位置为 ", save_path)
             resolve("保存配置成功，并设置了默认下载位置！");
             return;
@@ -918,6 +922,10 @@
 
         // 将不支持的字符替换为空格
         filename = filename.replace(unsupportedCharsRegex, ' ');
+
+        // 去除结尾的点号
+        if (filename.endsWith(".")) filename = filename.slice(0, -1);
+
         // 替换连续多个空格为一个空格 (空格,制表符,换行,回车等)
         return filename.replace(/\s+/g, ' ');
     }
@@ -934,7 +942,7 @@
                     address: GM_getValue("address", ""), //  Web UI 地址 http://127.0.0.1:8080
                     username: GM_getValue("username", ""), //  Web UI的用户名
                     password: GM_getValue("password", ""), //  Web UI的密码
-                    saveLocations: GM_getValue("saveLocations", [{label: "默认", value: ""}]), // 下载目录 默认 savePath 兼容老版本
+                    saveLocations: GM_getValue("saveLocations", [{ label: "默认", value: "" }]), // 下载目录 默认 savePath 兼容老版本
                     separator: GM_getValue("separator", null), // 文件分隔符 兼容 Linux Windows
                     autoStartDownload: GM_getValue("autoStartDownload", true),
                     autoCloseWindow: GM_getValue("autoCloseWindow", false), // 自动关闭窗口，只在窗口只有这个页面时生效
@@ -951,7 +959,7 @@
                 isDragging: false,
                 initialX: 0,
                 initialY: 0,
-                position: {x: 0, y: 0},
+                position: { x: 0, y: 0 },
             },
             methods: {
                 toggleConfigPopup() {
@@ -1048,7 +1056,7 @@
                     Client[config.client].download(inputValue, savePath, hash, torrentUrl, this.config.autoCloseWindow);
                 },
                 addLine() {
-                    this.config.saveLocations.push({label: "", value: ""})
+                    this.config.saveLocations.push({ label: "", value: "" })
                 },
                 saveLine() {
                     GM_setValue("saveLocations", this.config.saveLocations)
@@ -1529,8 +1537,8 @@
                 })
             }).then(response => {
                 if (!response.ok) {
-                    console.error(`获取种子下载地址失败: ${data.message}`);
-                    return reject(`获取种子下载地址失败: ${data.message}`);
+                    console.error(`获取种子下载地址失败: ${response.message}`);
+                    return reject(`获取种子下载地址失败: ${response.message}`);
                 }
                 return response.json();
             }).then(data => {
