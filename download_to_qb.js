@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      5.7
+// @version      5.8
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -516,6 +516,8 @@
                     if (item) formData.append('category', item.label); // 分类
 
                     formData.append('paused', !config.autoStartDownload); // 暂停? 默认 false
+                    // qBittorrent >= 5.0 https://github.com/qbittorrent/qBittorrent/issues/22766
+                    formData.append('stopped', !config.autoStartDownload); // 暂停? 默认 false
 
                     // let downloadMsg = cocoMessage.loading("下载中！", 10000, true);
 
