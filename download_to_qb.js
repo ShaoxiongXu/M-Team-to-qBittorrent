@@ -926,7 +926,7 @@
         filename = filename.replace(unsupportedCharsRegex, ' ');
 
         // 去除结尾的点号
-        if (filename.endsWith(".")) filename = filename.slice(0, -1);
+        filename = filename.replace(/\.+$/, '');
 
         // 替换连续多个空格为一个空格 (空格,制表符,换行,回车等)
         return filename.replace(/\s+/g, ' ');
