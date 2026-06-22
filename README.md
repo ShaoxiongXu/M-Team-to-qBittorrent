@@ -161,6 +161,13 @@ let sites = {
         </a>
     </td>
     <td align="center">
+        <a href="https://github.com/Blaskyy">
+            <img src="https://avatars.githubusercontent.com/u/1206802?v=4" width="100;" alt="Blaskyy"/>
+            <br />
+            <sub><b>Blaskyy</b></sub>
+        </a>
+    </td>
+    <td align="center">
         <a href="https://github.com/ywwzwb">
             <img src="https://avatars.githubusercontent.com/u/13915067?v=4" width="100;" alt="ywwzwb"/>
             <br />
