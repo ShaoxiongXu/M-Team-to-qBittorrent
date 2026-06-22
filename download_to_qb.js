@@ -2,7 +2,7 @@
 // @name         种子下载工具
 // @namespace    https://github.com/ShaoxiongXu/M-Team-to-qBittorrent
 // @description  在【馒头】或【NexusPHP 架构】PT站种子详情页添加下载按钮，点击后可以选择【标题|种子名|副标题】并将种子添加到 qBittorrent|Transmission，支持文件重命名并指定下载位置。
-// @version      5.8
+// @version      5.9
 // @icon         https://www.qbittorrent.org/favicon.svg
 // @require      https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js
 // @require      https://cdn.jsdelivr.net/gh/ShaoxiongXu/M-Team-to-qBittorrent@304e1e487cc415fa57aef27e6a1d3f74308a98e2/coco-message.js
@@ -290,7 +290,9 @@
                             reject("请检查 qBittorrent 访问地址是否正确");
                             return;
                         }
-                        if (response.responseText !== "Ok.") {
+                        // 兼容 qBittorrent 登录成功的两种响应：旧版返回 200 "Ok."；5.2.x 可能返回 204 空响应
+                        const loginOk = response.status === 204 || response.responseText === "Ok.";
+                        if (!loginOk) {
                             reject("请检查 qBittorrent 配置是否正确！");
                             return;
                         }
@@ -527,7 +529,13 @@
                         data: formData,
                         onload: function (response) {
                             const responseData = response.responseText;
-                            if (responseData !== "Ok.") {
+                            // 兼容 qBittorrent 添加成功的两种响应：旧版返回 "Ok."；5.2.x 返回 JSON {"success_count":..,"failure_count":0}
+                            let addOk = responseData === "Ok.";
+                            try {
+                                const r = JSON.parse(responseData);
+                                if (r && r.failure_count === 0) addOk = true;
+                            } catch (e) { /* 非 JSON，保持旧版判断 */ }
+                            if (!addOk) {
                                 downloadMsg();
                                 reject(`添加种子失败: ${responseData}`);
                             } else {
